@@ -247,8 +247,10 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 **Status（現在の状態／Expected vs Actual）**
 
 - Expected: `Planned`
-- Actual: `Planned`
-- scikit-learnは`pyproject.toml`/`uv.lock`に未追加。モデル・split実装・実Fold artifactも未作成。
+- Actual: `In progress`
+- 完了: scikit-learn `1.9.0`を`pyproject.toml`の`[project.dependencies]`（Core）へ追加し、Python 3.14.4でresolve/lock/import/最小`TfidfVectorizer→LinearSVC`・`LogisticRegression` Pipeline fitを検証済み（commit `9c08871`）。
+- 完了: `src/mail_classification/evaluation/full_dataset.py`でFullデータhash契約の動的Fail-fast検証（`verify_full_dataset_hash`/`load_verified_full_dataset`）を実装。契約値は`docs/reviews/full_review_decision.json`の`full_data_hash`を実行時参照し、コードへ literal 複製しない。実データ（800件、hash `53c6f8949a2c3c2c75351122e31dff6b43ca6ff8a4d8326947d387b75b9a0bbc`）での一致読込と1byte改変時の`ValueError`raiseを実地検証済み。
+- 未着手: 共通5-fold assignment生成、`StratifiedGroupKFold`採用判断、TF-IDF Pipeline／model factory、Fold保存形式の正本決定。
 - 既存の`src/mail_classification/schemas/folds.py`はschema/検証契約のみ。
 
 **Prerequisites（前提条件）**
@@ -267,7 +269,8 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 
 **Main outputs（主な成果物）**
 
-- Planned: updated `pyproject.toml`, `uv.lock`
+- Completed: updated `pyproject.toml`, `uv.lock`（scikit-learn追加）
+- Completed: `src/mail_classification/evaluation/full_dataset.py`とtest（Fullデータhash契約のFail-fast検証）
 - Planned: Core model/split/config modules and tests
 - Planned: model-independent common Fold artifact at a canonical shared path。正確なpathとCSV／JSON source-of-truth形式は実装前に固定する。
 - Planned: 各experiment runのmanifestに共通Fold artifactのpathとhashを記録する。

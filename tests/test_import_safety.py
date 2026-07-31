@@ -17,6 +17,7 @@ def test_import_has_no_file_generation_or_network_setup(tmp_path: Path) -> None:
             "import mail_classification.generation; "
             "import mail_classification.quality; "
             "import mail_classification.evaluation; "
+            "import mail_classification.models; "
             # 'socket' is excluded: scikit-learn's joblib backend imports the
             # stdlib socket module for local multiprocessing plumbing, not
             # network I/O. 'requests'/'urllib.request' remain a real signal.

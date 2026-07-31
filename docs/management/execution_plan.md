@@ -252,7 +252,8 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 - 完了: `src/mail_classification/evaluation/full_dataset.py`でFullデータhash契約の動的Fail-fast検証（`verify_full_dataset_hash`/`load_verified_full_dataset`）を実装。契約値は`docs/reviews/full_review_decision.json`の`full_data_hash`を実行時参照し、コードへ literal 複製しない。実データ（800件、hash `53c6f8949a2c3c2c75351122e31dff6b43ca6ff8a4d8326947d387b75b9a0bbc`）での一致読込と1byte改変時の`ValueError`raiseを実地検証済み。
 - 完了: `src/mail_classification/evaluation/splits.py`で`template_group`監査（`audit_template_groups`）、splitter推奨（`recommend_splitter_name`）、共通5-fold生成（`build_common_folds`）、JSON書き出し（`write_fold_artifact`）を実装。実データ800件は24 groups全て単一labelに属し（spanning 0件）group構造が実在するため`StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)`を採用（`task10_architecture.md`指定パラメータと一致）。`outputs/folds/common_folds.json`（hash `72a62dbffd23c38358744fb2a024a35a14b76747e264fc0abf7ce32c7f7e54c8`、生成物のため`.gitignore`管理・Git非追跡）へ書き出し済み。
 - 既知の限界（Phase 4へ引継ぎ）: labelごとの template group数（6）がn_splits（5）で割り切れないため、各labelにつき必ず1 foldが2 group分（66件）を受け取り、他4 foldsは1 group分（33/34件）となる。`StratifiedGroupKFold`はこの負担をlabelごとに異なるfoldへ分散させ、fold単位validation件数は134〜167件（理想160件に対し約±20%）。データ形状とn_splits設定の数学的必然であり実装不具合ではないが、macro-F1解釈時に留意する。
-- 未着手: TF-IDF Pipeline／model factory、Coreアブレーション条件確定。
+- 完了: `src/mail_classification/models/factory.py`に`build_core_pipeline(model_name, *, tfidf_params, model_params)`（`TfidfVectorizer`＋`LinearSVC`/`LogisticRegression`の未fit Pipeline factory）を実装。未知の`model_name`は`ValueError`。TF-IDFはPipeline内でのみfitされ、`.named_steps["tfidf"].transform()`を事前に呼ぶと`NotFittedError`になることをtestで確認。
+- 完了: Coreアブレーション条件D0〜D2を承認・確定（詳細は本節末尾「Core条件（D0〜D2）承認記録」）。承認過程で、初回提案のD2がD1のbigram設定を引き継いだままで前処理変更と同時に発生する主要因交絡（project_rules.md §8違反）を検出し、D2のTF-IDFをD0基準のunigramへ戻す修正（案A）を経て確定した。`src/mail_classification/models/conditions.py`に`CORE_CONDITIONS`（D0/D1/D2の`preprocessing_config`＋`tfidf_params`）、`CORE_MODEL_PARAMS`（`C=1.0`固定）、`apply_condition_preprocessing`、`build_condition_pipeline`を実装し、3条件×2モデル＝6通り全てのsmoke fit/predictをtestで確認。
 - 既存の`src/mail_classification/schemas/folds.py`はschema/検証契約のみ。
 
 **Prerequisites（前提条件）**
@@ -265,8 +266,8 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 - `uv`でscikit-learnを追加し、Python 3.14でresolve/import/minimal Pipelineを検証する。
 - Fullの`template_group`を監査し、`StratifiedGroupKFold`採用可否をデータに基づき決定する。
 - 一度だけ共通5-fold assignmentを生成し、全条件・全モデル用artifactとして保存する。
-- TF-IDFをPipeline内に置き、LinearSVC／Logistic Regression factoryと最小smoke fitを実装する。
-- Coreアブレーション条件はPhase 2のデータ特性を確認後、Phase 3開始時に一主要因ずつの比較となるよう承認・確定する。D0〜D2等の名称と内容は、承認前には正式仕様として扱わない。
+- 完了: TF-IDFをPipeline内に置き、LinearSVC／Logistic Regression factoryと最小smoke fitを実装した。
+- 完了: Coreアブレーション条件D0〜D2を一主要因ずつの比較となるよう承認・確定した（本節末尾参照）。以後、D0〜D2は正式仕様として扱う。
 - 解消済み: Fold保存形式は`docs/schemas/fold_artifact_schema.md`が定義する単一UTF-8 JSON（`FoldArtifact`＝`metadata`＋`records`）を正本とし、`folds.json`として保存する。`project_rules.md`と`task10_architecture.md`に残っていた`folds.csv`表記（旧`RunManifest`設計前の記述）は本方針へ更新済み。CSVへの派生出力は現時点で不要と判断する。
 
 **Main outputs（主な成果物）**
@@ -275,7 +276,8 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 - Completed: `src/mail_classification/evaluation/full_dataset.py`とtest（Fullデータhash契約のFail-fast検証）
 - Completed: `src/mail_classification/evaluation/splits.py`とtest（`template_group`監査、splitter推奨、共通5-fold生成、JSON書き出し）
 - Completed: model-independent common Fold artifact at `outputs/folds/common_folds.json`（`fold_artifact_hash`は各experiment run生成時にmanifestへ記録予定、Phase 4で対応）
-- Planned: Core model/split/config modules and tests
+- Completed: `src/mail_classification/models/factory.py`（`build_core_pipeline`）
+- Completed: `src/mail_classification/models/conditions.py`（`CORE_CONDITIONS`、`CORE_MODEL_PARAMS`、`apply_condition_preprocessing`、`build_condition_pipeline`）
 - Planned: Phase 3 dependency/Fold/model contract document
 
 **Validation（検証方法）**
@@ -283,6 +285,18 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 - Python 3.14 resolve/import/minimal Pipeline。
 - Fold sample coverage、train/validation overlap 0、同一group跨ぎ0、同一seed再現。
 - TF-IDFがPipeline外でfitされないこと、全条件が同じartifactを読むこと。
+
+**Core条件（D0〜D2）承認記録**
+
+- 承認日時: 2026-07-31 16:13:05 +07
+- 承認者: User (Yuji Sunagawa)（`AI-assisted manual content review`によるAI側の起草・監査を経て、契約`approval_authority: User`に基づき本人が承認）
+- 経緯: 初回AI起草案のD2は、特徴量をD1のbigram設定のまま前処理のみ変えていたため、D0基準で見るとn-gram要因と前処理要因が同時に変化する交絡があった（project_rules.md §8「一度に変える主要因は原則１つ」違反）。ユーザーへ確認したところ、修正案A（D2の特徴量をD0基準のunigramへ戻す）が選択され、この形で正式承認された。
+- 確定条件:
+  - **D0（baseline）**: 前処理はnormalizationのみ（NFKC・句読点・空白・lowercase）、header/signature/quoted-reply/URL/emailは変更しない。特徴量はTF-IDF unigramのみ（`ngram_range=(1,1)`）。
+  - **D1（n-gram拡張）**: 前処理はD0と同一。特徴量をunigram+bigram（`ngram_range=(1,2)`）へ拡張。
+  - **D2（前処理強化）**: 特徴量はD0と同一（unigramのみ）。前処理はheader/signature/quoted-reply除去とURL/emailマスクを有効化。
+  - モデル軸（`LinearSVC`／`LogisticRegression`、共に`C=1.0`）は各条件と直交し、3条件×2モデル＝6通り全てを比較する。
+- 実装: `src/mail_classification/models/conditions.py`のとおり実装済み、6通り全てのsmoke fit/predictを`tests/test_conditions.py`で確認済み。
 
 **Completion criteria（完了条件）**
 

@@ -64,3 +64,11 @@
 - 2026-07-31 11:39:08 +07 — **開始**: `uv lock --check`、全test、`git diff --check`、scope差分を再確認し、成功時のみ指定messageでcommitする。pushは行わない。
 - 2026-07-31 11:39:45 +07 — **完了**: 既定uv cacheがworkspace外read-onlyのため最初の`uv lock --check`は一時file作成時に環境起因で失敗。`UV_CACHE_DIR=/tmp/task10_uv_cache`を指定して再実行し、24 packageのlock整合を確認。続けて`pytest -q`は`77 passed in 0.35s`、`git diff --check`は問題なし。renderer/reporting/outputs差分なし、対象外model/data/CV実装なしを再確認。指定messageでcommitし、pushしない。
 - 2026-07-31 11:40:27 +07 — **完了**: staged差分検査で検出した12ファイルの末尾余分空行を修正後、`git diff --cached --check`成功、最終`pytest -q`は`77 passed in 0.53s`。`Implement task10 schemas and preprocessing contracts`として単一commitを作成し、本完了記録を同commitへamendする。pushは未実施。
+
+## Phase 1固定前確認・公開
+
+- 2026-07-31 11:50:31 +07 — **開始**: Phase 1 commit `80c5f52`の日報包含、working tree、Core/reporting依存境界、Python 3.14方針を実ファイルで確認し、必要な依存group修正・再検証・commit・pushを行う。Phase 2のscikit-learn追加や実装はまだ行わない。
+- 2026-07-31 11:50:31 +07 — **結果**: `git show`で`80c5f52`に11:40:27の最終日報記録が含まれること、開始時working treeがclean、upstreamが`origin/agent/pdf-renderer-port`であることを確認。一方、Markdown/BeautifulSoup/pdfplumberは通常の`project.dependencies`に含まれCore/reporting境界が未分離だったため、`reporting` dependency groupへ移してlock・Core test・all-groups reporting importを再検証する。
+- 2026-07-31 11:51:59 +07 — **完了**: Markdown/BeautifulSoup/pdfplumberを`reporting` groupへ分離し、Pydantic/PyYAMLのみをCore runtime依存、pytestを`dev`とした。sandbox内初回lock/all-groups同期はDNS制限で失敗したが、許可環境で解決。Core-only同期ではreporting 3 moduleが存在しないことと`77 passed in 0.33s`、all-groups同期では3 module import成功と`77 passed in 0.31s`、`uv lock --check`、`git diff --check`成功を確認。
+- 2026-07-31 11:51:59 +07 — **結果**: 現在の実行環境はPython 3.14.4。Phase 2のscikit-learnはまだ追加せず、Phase 2開始時にuvで解決・lock・import・最小Pipeline実行を確認する方針とした。現時点でPython version変更は行わない。
+- 2026-07-31 11:51:59 +07 — **開始**: 依存group分離と日報をcommit後、`origin/agent/pdf-renderer-port`へPhase 1一式をpushして固定する。

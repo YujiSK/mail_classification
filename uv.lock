@@ -251,9 +251,6 @@ name = "mail-classification"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "beautifulsoup4" },
-    { name = "markdown" },
-    { name = "pdfplumber" },
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
@@ -262,18 +259,25 @@ dependencies = [
 dev = [
     { name = "pytest" },
 ]
+reporting = [
+    { name = "beautifulsoup4" },
+    { name = "markdown" },
+    { name = "pdfplumber" },
+]
 
 [package.metadata]
 requires-dist = [
-    { name = "beautifulsoup4", specifier = ">=4.12,<5" },
-    { name = "markdown", specifier = ">=3.5,<4" },
-    { name = "pdfplumber", specifier = ">=0.11,<1" },
     { name = "pydantic", specifier = ">=2.12,<3" },
     { name = "pyyaml", specifier = ">=6,<7" },
 ]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9,<10" }]
+reporting = [
+    { name = "beautifulsoup4", specifier = ">=4.12,<5" },
+    { name = "markdown", specifier = ">=3.5,<4" },
+    { name = "pdfplumber", specifier = ">=0.11,<1" },
+]
 
 [[package]]
 name = "markdown"

@@ -3,14 +3,15 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-07-31T16:19:28+07:00` |
+| Last verified | `2026-07-31T16:34:52+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
+| Phase 4 implementation | commit未確定（本コミット作成時に追記予定）。実データ実行結果は`outputs/runs/phase4-core-seed42/`（Git非追跡・再現可能） |
 | Branch | `agent/task10-phase3-model-foundation` |
-| Current phase | Phase 2 `Completed`。Phase 3 `Completed`。Phase 4は `Ready` だが未着手 |
+| Current phase | Phase 2 `Completed`。Phase 3 `Completed`。Phase 4 `Completed`。Phase 5は未着手 |
 | Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |
-| Remote note | ドキュメント整理2 commits（`f230c33`、`d5130bb`）はpush済み。続くPhase 3実装5 commits（`9c08871`〜`1a44c81`）はlocalのみ、`origin/agent/task10-phase3-model-foundation`へ未push |
+| Remote note | ドキュメント整理2 commits（`f230c33`、`d5130bb`）はpush済み。続くPhase 3〜4実装commits（`9c08871`以降）はlocalのみ、`origin/agent/task10-phase3-model-foundation`へ未push |
 
 Coreテーマ:
 
@@ -328,8 +329,11 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 **Status（現在の状態／Expected vs Actual）**
 
 - Expected: `Planned`
-- Actual: `Planned`
-- metrics、OOF、Core experiment runは未作成。
+- Actual: `Completed`
+- 完了: `src/mail_classification/evaluation/cv.py`（`run_core_cell`/`run_core_experiments`）、`metrics.py`（`build_metrics_long`/`build_confusion_matrix_rows`）、`aggregate.py`（`build_metrics_summary`）、`paired.py`（`build_paired_differences`）、`runner.py`（`load_fold_artifact`/`run_and_write_core_experiments`）を実装。pandasは導入せず、既存モジュール（`quality/statistics.py`等）と同じstdlib（`statistics`、`collections.Counter`、`csv`）のみで集計する設計とした。
+- 完了: 実データ（Full 800件、`outputs/folds/common_folds.json`）で3条件×2モデル＝6セル×5 foldを実行し、`outputs/runs/phase4-core-seed42/`へ`metrics_long.csv`、`metrics_summary.csv`、`predictions_oof.csv`（4800行＝6セル×800件、各セルで800件1:1 coverage）、`confusion_matrix.csv`、`paired_differences.csv`、`manifest.json`（`fold_artifact_path`/`hash`、`data_hash`は共通Fold契約経由で記録、`model_name`は複数モデルを跨ぐため`null`）を生成した。
+- 実測結果（macro-F1 cv_mean、解釈はPhase 5へ委ねる）: D0 linear_svc 0.616、D0 logistic_regression 0.593、D1 linear_svc 0.625、D1 logistic_regression 0.575、D2 linear_svc 0.596、D2 logistic_regression 0.610。fold間標準偏差は0.08〜0.13と大きく、Phase 3で記録した既知の限界（labelあたり6 template groups÷5 foldsによるfold sizeの不均衡、134〜167件）が一因と見られるが、原因分析はPhase 5の役割とし本Phaseでは断定しない。
+- `outputs/runs/`は生成物のため`.gitignore`へ追加し、Git非追跡とした（`outputs/folds/`等と同様の運用）。
 
 **Prerequisites（前提条件）**
 
@@ -337,17 +341,17 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 
 **Main tasks（主な作業）**
 
-- 原則1主要因ずつのCoreアブレーションを5-foldで実行。
-- macro-F1を主指標とし、Accuracy、macro/weighted、classwise P/R/F1、confusion matrixを計算。
-- Fold Long、CV mean/std、fit/predict時間、Fold vocabulary sizeを保存。
-- 全OOF predictionとFold単位ペア差を1:1 coverage検証付きで保存。
+- 完了: 原則1主要因ずつのCoreアブレーションを5-foldで実行した。
+- 完了: macro-F1を主指標とし、Accuracy、macro/weighted、classwise P/R/F1、confusion matrixを計算した。
+- 完了: Fold Long、CV mean/std、fit/predict時間、Fold vocabulary sizeを保存した。
+- 完了: 全OOF predictionとFold単位ペア差を1:1 coverage検証付きで保存した。
 
 **Main outputs（主な成果物）**
 
-- Planned: `outputs/runs/<run_id>/metrics_long.csv`
-- Planned: `outputs/runs/<run_id>/metrics_summary.csv`
-- Planned: `outputs/runs/<run_id>/predictions_oof.csv`
-- Planned: confusion matrices、paired differences、timing/vocabulary artifacts、run manifest。
+- Completed: `outputs/runs/phase4-core-seed42/metrics_long.csv`
+- Completed: `outputs/runs/phase4-core-seed42/metrics_summary.csv`
+- Completed: `outputs/runs/phase4-core-seed42/predictions_oof.csv`
+- Completed: `outputs/runs/phase4-core-seed42/confusion_matrix.csv`、`paired_differences.csv`、`manifest.json`（timing/vocabularyは`metrics_long.csv`の`fit_seconds`/`predict_seconds`/`vocabulary_size`列に保存）。
 
 **Validation（検証方法）**
 
@@ -654,12 +658,15 @@ Phase 7 Report / PDF / Finalization          [Planned]
 ### 未確認事項
 
 - 大学課題10の要件原本。特にBERT比較の必須/任意、提出形式、評価指標の指定。
-- Coreアブレーション条件名・水準（D0〜D2等）は未確定。
 - Mermaidは現PDF基盤で未検証のため、本書では使用していない。
+- Phase 4実測結果（macro-F1約0.58〜0.63、fold間標準偏差0.08〜0.13）の原因分析はPhase 5（説明性・誤分類分析）で行う。本書では断定していない。
 
 ### 直近アクション
 
 1. 完了: Full承認証拠とPhase 2完了記録をcommit/pushし、local/remote同期とworking tree cleanを確認した。
 2. 完了: scikit-learn `1.9.0`のPython 3.14.4互換性をlock・import・最小Pipelineで検証した（commit `9c08871`）。
 3. 完了: Fold artifact正本形式をJSON（`folds.json`）に確定し、project rules/architectureの`folds.csv`表記を更新した。
-4. 次: Core条件（一主要因ずつのアブレーション水準）の詳細計画を承認後、共通5-fold assignment生成とFold Artifact書き出しを実装する。
+4. 完了: 共通5-fold assignment生成とFold Artifact書き出し（`outputs/folds/common_folds.json`）を実装した。
+5. 完了: Core条件D0〜D2をUser (Yuji Sunagawa)承認のもと確定し、TF-IDF/model factoryを実装した（commit `1a44c81`）。
+6. 完了: Phase 4 Core実験（6セル×5-fold）を実データで実行し、Fold Long/集約/OOF/confusion/paired differences/manifestを`outputs/runs/phase4-core-seed42/`へ保存した。
+7. 次: Phase 5（説明性・誤分類分析）着手前に、local 6 commits（`9c08871`以降）のpush、および本ドキュメント整理・Phase 4実装のcommit/push要否をユーザーへ確認する。

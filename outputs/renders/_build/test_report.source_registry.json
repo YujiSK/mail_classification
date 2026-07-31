@@ -1,0 +1,31 @@
+[
+  {
+    "id": "heading-title",
+    "type": "heading",
+    "level": "h1",
+    "text": "PDF Renderer 動作確認",
+    "next_block_text": "この文書は、移植したPDF生成モジュールの基本変換を確認するためのテストレポートです。"
+  },
+  {
+    "id": "heading-title-section-d4001a1cd7",
+    "type": "heading",
+    "level": "h2",
+    "text": "変換対象",
+    "next_block_text": "Markdownから中間HTMLを生成し、そのHTMLをChromiumでPDFへ変換します。"
+  },
+  {
+    "id": "table-root-1",
+    "type": "table",
+    "n_rows": 4,
+    "size_class": "small-table",
+    "first_row_text": "項目 内容 状態",
+    "last_row_text": "出力 outputs/test_report.pdf 検証対象"
+  },
+  {
+    "id": "heading-title-section-5be2231484",
+    "type": "heading",
+    "level": "h2",
+    "text": "確認事項",
+    "next_block_text": "見出し、本文、インラインコード、および表がPDFに含まれることを確認します。"
+  }
+]

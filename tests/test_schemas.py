@@ -161,6 +161,16 @@ def test_manifest_rejects_invalid_hash() -> None:
         RunManifest(**data)
 
 
+def test_manifest_validates_approval_decision_hash() -> None:
+    data = manifest_data()
+    data["approval_decision_path"] = "docs/reviews/pilot_review_decision.json"
+    data["approval_decision_hash"] = HASH
+    assert RunManifest(**data).approval_decision_hash == HASH
+    data["approval_decision_hash"] = "invalid"
+    with pytest.raises(ValidationError):
+        RunManifest(**data)
+
+
 def test_manifest_paths_need_not_exist() -> None:
     data = manifest_data()
     data["data_path"] = "/does/not/exist.jsonl"

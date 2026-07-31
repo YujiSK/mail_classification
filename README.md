@@ -9,7 +9,8 @@ Current status:
 - Phase 1: schemas and preprocessing contracts complete.
 - Phase 2: synthetic-data generation and automatic quality assurance complete;
   Pilot review approved after source correction and regeneration. Full
-  generation and final data QA have not started.
+  generation and final data QA are implemented and await a clean committed
+  execution.
 - Model training, cross-validation, and report writing have not started.
 
 Project rules are defined in `docs/project_rules.md`. Generated raw data and

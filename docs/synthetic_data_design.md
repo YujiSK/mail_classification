@@ -15,6 +15,7 @@ Implementation:
 - `assets/templates/email_templates.yml`
 - `scripts/generate_smoke_data.py`
 - `scripts/generate_pilot_data.py`
+- `scripts/generate_full_data.py`
 
 ## Labels
 
@@ -71,9 +72,17 @@ question.
   traceability, deterministic hash, and basic checks.
 - Pilot: 96 records, 24 per label. Runs the complete duplicate, leakage,
   statistics, and review-sample workflow.
-- Full: configured as 800 and explicitly `enabled: false`. The generator
-  refuses to run it. Human Pilot approval must be recorded before a later
-  change enables it.
+- Full: 800 records after tracked Pilot approval validation. Each class has
+  200 records; each class/urgency pair has 50; each template group has 33 or
+  34; each class has difficulty counts 67/67/66, with the 66-count difficulty
+  rotated across classes. One deterministic record per template group forms a
+  24-row spot-review CSV.
+
+Full repeats the four authored semantic variations within each template group,
+but assigns a deterministic surface serial. Greeting/closing combinations are
+unique for repeated copies of the same variation, while the seeded structure
+and component selection remains reproducible. Exact and normalized duplicate
+checks remain mandatory.
 
 ## Reproducibility
 
@@ -82,6 +91,8 @@ IDs, component choices, text, labels, difficulty, metadata, and output JSONL
 order are deterministic for the same configuration, seed, template bytes, and
 generator version. `generated_at` is a configured timezone-aware constant.
 Runtime time and Git state are stored only in the separate run manifest.
+Pilot-compatible generation remains version `1.1.0`; the Full allocation
+algorithm is independently versioned as `full_version`.
 
 Hashes are lowercase SHA-256 of exact file bytes:
 

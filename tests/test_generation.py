@@ -91,17 +91,16 @@ def test_generated_at_is_deterministic_and_timezone_aware() -> None:
     assert timestamps == {datetime(2026, 7, 31, tzinfo=timezone.utc)}
 
 
-def test_unknown_stage_and_disabled_full_are_rejected() -> None:
+def test_unknown_stage_is_rejected_and_full_is_enabled() -> None:
     with pytest.raises(ValueError, match="unknown generation stage"):
         generator().generate("other")
-    with pytest.raises(ValueError, match="disabled"):
-        generator().generate("full")
+    assert len(generator().generate("full")) == 800
 
 
-def test_invalid_enabled_full_config_is_rejected() -> None:
+def test_invalid_full_count_is_rejected() -> None:
     payload = CONFIG.model_dump(mode="json")
-    payload["stages"]["full"]["enabled"] = True
-    with pytest.raises(ValidationError, match="full stage"):
+    payload["stages"]["full"]["count"] = 798
+    with pytest.raises(ValidationError, match="exactly 800"):
         GenerationConfig.model_validate(payload)
 
 
@@ -190,6 +189,34 @@ def test_urgency_components_are_balanced_across_labels() -> None:
     assert all(count == 6 for count in counts[MailLabel.PRODUCT_INQUIRY].values())
 
 
+def test_full_distribution_is_exact_and_deterministic() -> None:
+    first = generator().generate("full")
+    second = generator().generate("full")
+    assert records_to_jsonl_bytes(first) == records_to_jsonl_bytes(second)
+    assert len(first) == 800
+    assert Counter(record.label for record in first) == {
+        label: 200 for label in MailLabel
+    }
+    group_counts = Counter(record.template_group for record in first)
+    assert set(group_counts.values()) == {33, 34}
+    for label in MailLabel:
+        difficulty_counts = Counter(
+            record.difficulty.value for record in first if record.label == label
+        )
+        assert sorted(difficulty_counts.values()) == [66, 67, 67]
+        urgency_counts = Counter(
+            record.metadata["component_indices"]["urgency"]
+            for record in first
+            if record.label == label
+        )
+        assert urgency_counts == {index: 50 for index in range(4)}
+    assert len({record.id for record in first}) == 800
+    assert all("template_instance" in record.metadata for record in first)
+    assert {
+        record.metadata["generator_version"] for record in first
+    } == {CONFIG.generator.full_version}
+
+
 def test_non_intent_we_is_not_class_specific_in_body_text() -> None:
     labels = {
         record.label
@@ -275,6 +302,50 @@ def test_pipeline_writes_required_smoke_artifacts(tmp_path: Path) -> None:
     assert first.data_path.exists()
     assert first.summary_path.exists()
     assert first.manifest_path.exists()
+
+
+def test_pipeline_writes_approved_full_artifacts(tmp_path: Path) -> None:
+    import shutil
+
+    (tmp_path / "configs").mkdir()
+    (tmp_path / "assets" / "templates").mkdir(parents=True)
+    (tmp_path / "docs" / "reviews").mkdir(parents=True)
+    shutil.copy2(ROOT / "configs" / "phase2.yml", tmp_path / "configs" / "phase2.yml")
+    shutil.copy2(ROOT / CONFIG.paths.templates, tmp_path / CONFIG.paths.templates)
+    shutil.copy2(
+        ROOT / CONFIG.paths.pilot_review_decision,
+        tmp_path / CONFIG.paths.pilot_review_decision,
+    )
+    result = run_generation_stage("full", tmp_path)
+    assert result.count == 800
+    assert result.automatic_quality_pass
+    assert result.data_path.exists()
+    assert result.summary_path.exists()
+    assert result.manifest_path.exists()
+    assert (tmp_path / CONFIG.paths.quality_dir / "full_review_samples.csv").exists()
+    manifest = result.manifest_path.read_text(encoding="utf-8")
+    assert CONFIG.paths.pilot_review_decision in manifest
+
+
+def test_pipeline_rejects_full_when_pilot_approval_hash_is_stale(
+    tmp_path: Path,
+) -> None:
+    import json
+    import shutil
+
+    (tmp_path / "configs").mkdir()
+    (tmp_path / "assets" / "templates").mkdir(parents=True)
+    decision_path = tmp_path / CONFIG.paths.pilot_review_decision
+    decision_path.parent.mkdir(parents=True)
+    shutil.copy2(ROOT / "configs" / "phase2.yml", tmp_path / "configs" / "phase2.yml")
+    shutil.copy2(ROOT / CONFIG.paths.templates, tmp_path / CONFIG.paths.templates)
+    decision = json.loads(
+        (ROOT / CONFIG.paths.pilot_review_decision).read_text(encoding="utf-8")
+    )
+    decision["pilot_data_hash"] = "0" * 64
+    decision_path.write_text(json.dumps(decision), encoding="utf-8")
+    with pytest.raises(ValueError, match="pilot_data_hash"):
+        run_generation_stage("full", tmp_path)
 
 
 def test_clean_git_status_is_recorded_as_false(monkeypatch) -> None:

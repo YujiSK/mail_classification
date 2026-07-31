@@ -39,15 +39,15 @@ class SyntheticMailGenerator:
             raise ValueError(f"generation stage is disabled: {stage}")
 
         rng = random.Random(self.config.generator.seed)
-        candidates = [
-            (template, variation_id)
+        candidates: list[tuple[EmailTemplate, int, int | None]] = [
+            (template, variation_id, None)
             for template in self.catalog.templates
             for variation_id in range(self.config.generator.variations_per_template)
         ]
         if stage == "smoke":
-            by_label: dict[MailLabel, list[tuple[EmailTemplate, int]]] = defaultdict(
-                list
-            )
+            by_label: dict[
+                MailLabel, list[tuple[EmailTemplate, int, int | None]]
+            ] = defaultdict(list)
             for candidate in candidates:
                 by_label[candidate[0].label].append(candidate)
             selected = []
@@ -58,7 +58,7 @@ class SyntheticMailGenerator:
                 rng.shuffle(pool)
                 selected.extend(pool[: per_label + (offset < remainder)])
             candidates = selected
-        else:
+        elif stage == "pilot":
             if stage_config.count > len(candidates):
                 raise ValueError(
                     "requested count exceeds unique template variations; "
@@ -66,10 +66,15 @@ class SyntheticMailGenerator:
                 )
             rng.shuffle(candidates)
             candidates = candidates[: stage_config.count]
+        else:
+            candidates = self._full_candidates(stage_config.count)
+            rng.shuffle(candidates)
 
         label_positions: dict[MailLabel, int] = defaultdict(int)
         records = []
-        for position, (template, variation_id) in enumerate(candidates, start=1):
+        for position, (template, variation_id, surface_serial) in enumerate(
+            candidates, start=1
+        ):
             label_position = label_positions[template.label]
             records.append(
                 self._compose(
@@ -78,6 +83,7 @@ class SyntheticMailGenerator:
                     template,
                     variation_id,
                     label_position,
+                    surface_serial,
                     rng,
                 )
             )
@@ -93,11 +99,21 @@ class SyntheticMailGenerator:
         template: EmailTemplate,
         variation_id: int,
         label_position: int,
+        surface_serial: int | None,
         rng: random.Random,
     ) -> RawMailRecord:
         shared = self.catalog.shared
-        greeting_index = rng.randrange(len(shared.greetings))
-        closing_index = rng.randrange(len(shared.closings))
+        if surface_serial is None:
+            greeting_index = rng.randrange(len(shared.greetings))
+            closing_index = rng.randrange(len(shared.closings))
+        else:
+            surface_cycle = (
+                surface_serial // self.config.generator.variations_per_template
+            )
+            greeting_index = surface_cycle % len(shared.greetings)
+            closing_index = (
+                surface_cycle // len(shared.greetings) + variation_id
+            ) % len(shared.closings)
         sender_index = rng.randrange(len(shared.senders))
         subject_index = rng.randrange(len(shared.subjects))
         signature_index = rng.randrange(len(shared.signatures))
@@ -142,6 +158,28 @@ class SyntheticMailGenerator:
         raw_text = "\n\n".join(raw_sections)
         folded = raw_text.casefold()
 
+        metadata = {
+            "generator_version": (
+                self.config.generator.full_version
+                if surface_serial is not None
+                else self.config.generator.version
+            ),
+            "multi_intent": template.multi_intent,
+            "secondary_intent": template.secondary_intent,
+            "contains_negation": any(negation in folded for negation in NEGATIONS),
+            "component_indices": {
+                "greeting": greeting_index,
+                "closing": closing_index,
+                "sender": sender_index,
+                "subject": subject_index,
+                "signature": signature_index if has_signature else None,
+                "quoted_reply": quote_index if has_quoted_reply else None,
+                "urgency": urgency_index,
+            },
+        }
+        if surface_serial is not None:
+            metadata["template_instance"] = surface_serial
+
         return RawMailRecord(
             id=f"syn-{stage}-{position:04d}",
             raw_text=raw_text,
@@ -156,21 +194,49 @@ class SyntheticMailGenerator:
             template_id=template.template_id,
             variation_id=variation_id,
             generated_at=self.config.generator.deterministic_generated_at,
-            metadata={
-                "generator_version": self.config.generator.version,
-                "multi_intent": template.multi_intent,
-                "secondary_intent": template.secondary_intent,
-                "contains_negation": any(
-                    negation in folded for negation in NEGATIONS
-                ),
-                "component_indices": {
-                    "greeting": greeting_index,
-                    "closing": closing_index,
-                    "sender": sender_index,
-                    "subject": subject_index,
-                    "signature": signature_index if has_signature else None,
-                    "quoted_reply": quote_index if has_quoted_reply else None,
-                    "urgency": urgency_index,
-                },
-            },
+            metadata=metadata,
         )
+
+    def _full_candidates(
+        self, count: int
+    ) -> list[tuple[EmailTemplate, int, int]]:
+        labels = list(MailLabel)
+        difficulties = list(self.config.quality.required_difficulties)
+        if count % len(labels):
+            raise ValueError("full count must divide evenly across labels")
+        per_label = count // len(labels)
+        if per_label != 200 or len(difficulties) != 3:
+            raise ValueError("full allocation requires 200 records and 3 difficulties")
+
+        candidates: list[tuple[EmailTemplate, int, int]] = []
+        for label_index, label in enumerate(labels):
+            low_difficulty = difficulties[label_index % len(difficulties)]
+            for difficulty_index, difficulty in enumerate(difficulties):
+                templates = [
+                    template
+                    for template in self.catalog.templates
+                    if template.label == label and template.difficulty == difficulty
+                ]
+                if len(templates) != 2:
+                    raise ValueError(
+                        "full allocation requires two template groups per "
+                        f"label/difficulty: {label.value}/{difficulty.value}"
+                    )
+                difficulty_count = 66 if difficulty == low_difficulty else 67
+                group_counts = [difficulty_count // 2] * 2
+                if difficulty_count % 2:
+                    group_counts[(label_index + difficulty_index) % 2] += 1
+                for template, group_count in zip(
+                    templates, group_counts, strict=True
+                ):
+                    candidates.extend(
+                        (
+                            template,
+                            serial % self.config.generator.variations_per_template,
+                            serial,
+                        )
+                        for serial in range(group_count)
+                    )
+        if len(candidates) != count:
+            raise RuntimeError("full allocation did not produce the requested count")
+        return candidates

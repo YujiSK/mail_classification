@@ -48,6 +48,8 @@ class RunManifest(BaseModel):
     template_path: str | None = None
     template_hash: Sha256Hex | None = None
     generator_version: str | None = None
+    approval_decision_path: str | None = None
+    approval_decision_hash: Sha256Hex | None = None
     cv_seed: int | None = Field(ge=0)
     fold_artifact_path: str | None
     fold_artifact_hash: Sha256Hex | None

@@ -47,6 +47,14 @@ def build_quality_statistics(records: list[RawMailRecord]) -> dict[str, object]:
     total = len(records)
     template_groups = {record.template_group for record in records}
     variations = {(record.template_id, record.variation_id) for record in records}
+    template_group_counts = Counter(record.template_group for record in records)
+    class_urgency_counts = Counter(
+        (
+            record.label.value,
+            str(record.metadata.get("component_indices", {}).get("urgency")),
+        )
+        for record in records
+    )
     flag_counts = {
         flag: sum(bool(getattr(record, flag)) for record in records)
         for flag in ("has_header", "has_signature", "has_quoted_reply")
@@ -63,6 +71,7 @@ def build_quality_statistics(records: list[RawMailRecord]) -> dict[str, object]:
             for (label, difficulty), count in sorted(cross.items())
         },
         "template_group_count": len(template_groups),
+        "template_group_counts": dict(sorted(template_group_counts.items())),
         "template_groups_per_label": {
             label: len(
                 {
@@ -86,6 +95,10 @@ def build_quality_statistics(records: list[RawMailRecord]) -> dict[str, object]:
         },
         "length_statistics": length_statistics,
         "structure_counts": flag_counts,
+        "class_urgency_counts": {
+            f"{label}|{urgency}": count
+            for (label, urgency), count in sorted(class_urgency_counts.items())
+        },
         "structure_ratios": {
             key: value / total for key, value in flag_counts.items()
         },

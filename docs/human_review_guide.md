@@ -68,3 +68,16 @@ to `docs/reviews/pilot_review_decision.json`. The tracked record is the Phase
 Gate source of truth and must include the ignored decision JSON hash as well as
 the Pilot data, template, review CSV, immutable review fields, and leakage
 findings hashes.
+
+## Full spot review
+
+After Full automatic QA, review
+`outputs/data_quality/full_review_samples.csv`. It contains exactly one record
+from each of the 24 template groups and preserves class/difficulty coverage,
+shortest/longest examples, structural flags, negation, multi-intent text, and
+available informational candidates. Fill only the two review columns.
+
+Full approval requires all 24 rows to pass, explicit decisions for every Full
+informational candidate, matching Full data/template/config/review hashes, and
+a manifest with `git_dirty: false`. Store the immutable approval under
+`docs/reviews/`; only then may the Full data hash become the Phase 3 input.

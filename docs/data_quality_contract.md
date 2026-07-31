@@ -57,7 +57,10 @@ version.
 - no exact or normalized duplicate group;
 - largest group share no greater than 0.25;
 - exclusive token/bigram candidate frequency of at least four;
+- Full exclusive token/bigram candidate frequency of at least thirty;
 - maximum cross-class shared-component ratio deviation of 0.05;
+- Full template-group and per-class difficulty count difference no greater
+  than one;
 - ten base review samples per class;
 - Pilot must contain easy, medium, and hard examples.
 
@@ -98,3 +101,15 @@ Only a later reviewed configuration change may enable Full generation. The
 machine-readable approval source of truth is the tracked
 `docs/reviews/pilot_review_decision.json`; ignored output-side evidence alone
 cannot satisfy the Phase Gate.
+
+Before Full generation, the pipeline regenerates Pilot records in memory and
+requires the tracked approval's Pilot data hash, template-definition hash,
+Pilot generator version, status, readiness flag, and review counts to match.
+The approval path and exact SHA-256 are stored in the Full manifest.
+
+Full automatic quality passes only when it also has exactly 800 records, 200
+per class, template groups of 33 or 34 records, per-class difficulty counts
+of 67/67/66, four urgency components of 50 records each per class, no exact or
+normalized duplicate, and no leakage error or warning. Full informational
+lexical candidates use the scaled minimum frequency of thirty and require a
+machine-readable decision after spot review.

@@ -9,6 +9,7 @@ from mail_classification.generation import (
 from mail_classification.generation.io import records_to_jsonl_bytes
 from mail_classification.quality import (
     audit_leakage,
+    build_full_spot_review_samples,
     build_quality_statistics,
     build_review_samples,
     find_duplicates,
@@ -21,6 +22,7 @@ ROOT = Path(__file__).parents[1]
 CONFIG = load_generation_config(ROOT / "configs" / "phase2.yml")
 CATALOG = load_template_catalog(ROOT / CONFIG.paths.templates)
 PILOT = SyntheticMailGenerator(CONFIG, CATALOG).generate("pilot")
+FULL = SyntheticMailGenerator(CONFIG, CATALOG).generate("full")
 
 
 def record(
@@ -112,6 +114,24 @@ def test_pilot_has_no_error_or_warning_leakage_findings() -> None:
         for finding in findings
         if finding["severity"] in {"error", "warning"}
     ]
+
+
+def test_full_has_no_duplicates_or_error_warning_leakage_findings() -> None:
+    assert find_duplicates(FULL) == []
+    thresholds = CONFIG.quality.model_copy(
+        update={
+            "exclusive_feature_min_count": (
+                CONFIG.quality.full_exclusive_feature_min_count
+            )
+        }
+    )
+    findings = audit_leakage(FULL, thresholds)
+    assert not [
+        finding
+        for finding in findings
+        if finding["severity"] in {"error", "warning"}
+    ]
+    assert len(findings) == 10
 
 
 def test_label_literal_leak_is_detected() -> None:
@@ -221,6 +241,13 @@ def test_statistics_count_classes_difficulties_and_lengths() -> None:
         assert stats["length_statistics"][label.value]["characters"]["min"] > 0
 
 
+def test_full_statistics_capture_required_distribution() -> None:
+    stats = build_quality_statistics(FULL)
+    assert stats["class_counts"] == {label.value: 200 for label in MailLabel}
+    assert set(stats["template_group_counts"].values()) == {33, 34}
+    assert set(stats["class_urgency_counts"].values()) == {50}
+
+
 def test_output_hash_is_deterministic() -> None:
     payload = records_to_jsonl_bytes(PILOT)
     assert sha256_bytes(payload) == sha256_bytes(records_to_jsonl_bytes(PILOT))
@@ -247,3 +274,27 @@ def test_review_samples_cover_each_class_and_required_cases() -> None:
         assert reason in reasons
     assert all(row["review_status"] == "" for row in rows)
     assert all(row["review_comment"] == "" for row in rows)
+
+
+def test_full_spot_review_has_one_row_per_template_group() -> None:
+    thresholds = CONFIG.quality.model_copy(
+        update={
+            "exclusive_feature_min_count": (
+                CONFIG.quality.full_exclusive_feature_min_count
+            )
+        }
+    )
+    leakage = audit_leakage(FULL, thresholds)
+    rows = build_full_spot_review_samples(FULL, leakage)
+    assert len(rows) == 24
+    assert len({row["template_group"] for row in rows}) == 24
+    assert {row["label"] for row in rows} == {label.value for label in MailLabel}
+    assert {row["difficulty"] for row in rows} == {"easy", "medium", "hard"}
+    reasons = "|".join(str(row["selection_reasons"]) for row in rows)
+    assert "shortest" in reasons
+    assert "longest" in reasons
+    assert all(
+        f"leakage_finding:{finding['feature']}" in reasons
+        for finding in leakage
+    )
+    assert all(row["review_status"] == "" for row in rows)

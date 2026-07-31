@@ -22,6 +22,7 @@ Implementation: `src/mail_classification/schemas/run_manifest.py`.
 | `config_hash`, `data_hash`, `fold_artifact_hash` | string/null | required, nullable | exactly 64 lowercase hex characters |
 | `data_generation_seed`, `cv_seed` | integer/null | required, nullable | zero or greater |
 | `template_path`, `template_hash`, `generator_version` | string/null | optional, nullable | Phase 2 generation provenance; hash uses exact bytes |
+| `approval_decision_path`, `approval_decision_hash` | string/null | optional, nullable | tracked Phase Gate evidence used by Full generation |
 | `preprocessor_name`, `preprocessor_version` | string/null | required, nullable | identity or unavailable state |
 | `model_name`, `model_parameters` | string/object/null | required, nullable | Phase 1 allows `null`; params must be JSON-compatible |
 | `primary_metric` | string | optional | default `macro_f1`, nonblank |

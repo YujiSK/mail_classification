@@ -3,12 +3,12 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-07-31T14:36:42+07:00` |
+| Last verified | `2026-07-31T14:52:26+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Branch | `agent/task10-phase2-data-generation` |
-| Current phase | Phase 2C — Full生成・最終Data QAの開始待ち（Phase 2全体は `In progress`） |
+| Current phase | Phase 2C — Full実装済み・clean commit後の正式生成待ち（Phase 2全体は `In progress`） |
 | Status sources | 実在するGit履歴、`docs/daily_report_20260731.md`、機械可読のSmoke/Pilot manifest・品質artifact |
-| Remote note | Phase 2B state-record commitとpushを実施後、clean同期状態からPhase 2Cへ移る |
+| Remote note | Phase 2Bは`358c5c3`までlocal/remote同期済み。Phase 2C実装はworking tree |
 
 Coreテーマ:
 
@@ -162,7 +162,8 @@ raw data、run manifest、Fold artifactと、非破壊・決定的な英語3層�
 - Generator/quality implementation: `Completed` at local commit `a59d3a7`
 - Smoke/Pilot and automatic quality gate: `Completed`
 - Human Review Gate: `Approved` after source correction and regenerated review
-- Full generation: `Ready for Phase 2C`、設定上はdisabledで未生成
+- Full implementation: `Completed` in working tree、126 testsと一時directory dry run成功
+- Full generation: 設定上enabled。実装commit/push後のclean HEADからのみ正式生成するため未実行
 - Actual Pilot manifest: `outputs/manifests/phase2-pilot-seed20260731.json`
   - `git_commit`: `397683ce891a67884d158ac240e8c929aad2f48f`
   - `git_dirty`: `true`（Human Review修正のcommit前に再生成）
@@ -182,25 +183,27 @@ raw data、run manifest、Fold artifactと、非破壊・決定的な英語3層�
 - 完了: 初回63件reviewで`we`、urgency偏り、`tg024`不備を検出し、生成sourceを修正。
 - 完了: 追加Punch Listに基づき`tg005`、`tg018`、`tg021`を自然な文脈へ修正し、`tg023`へ別intentの罠を加えてHard根拠を強化。
 - 完了: 再抽出60件を全件確認。この60件にはinfo候補10種類の該当sampleを含み、全件pass。
-- 未完了: 約800件のFullを有効化・生成し、同じ品質検査を再実行する。
+- 完了: Full 800件のclass 200、urgency 50、group 33/34、difficulty 67/67/66の決定的配分、Pilot承認hash Gate、Full QA、24 group spot reviewを実装。
+- 未完了: Phase 2C実装をcommit/push後、clean HEADからFullを2回生成し、spot reviewとhash固定を行う。
 
 **Main outputs（主な成果物）**
 
 - Tracked: `configs/phase2.yml`, `assets/templates/email_templates.yml`
 - Tracked: `src/mail_classification/generation/`, `src/mail_classification/quality/`
-- Tracked: `scripts/generate_smoke_data.py`, `scripts/generate_pilot_data.py`
+- Tracked: `scripts/generate_smoke_data.py`, `scripts/generate_pilot_data.py`, `scripts/generate_full_data.py`
 - Tracked: Phase 2 tests and three Phase 2 contract documents。
 - Generated/ignored but verified: `data/raw/smoke_emails.jsonl`, `data/raw/pilot_emails.jsonl`
 - Generated/ignored but verified: `outputs/data_quality/`, `outputs/manifests/`
 - Generated/ignored review evidence: `outputs/data_quality/pilot_review_decision.json`
-- Planned after review: `data/raw/full_emails.jsonl` and matching quality/manifest artifacts。
+- Planned after clean commit: `data/raw/full_emails.jsonl` and matching quality/manifest artifacts。
 
 **Validation（検証方法）**
 
-- 修正後の`pytest -q`: 119 passed。
+- Phase 2C実装後の`pytest -q`: 126 passed。
 - 同一seedによるPilot hash一致、schema/JSONL round-trip、4 label・難易度・group/variation coverage。
 - exact/normalized duplicate、label/template/header/signature/metadata/length監査。
 - `outputs/data_quality/pilot_review_samples.csv`全60件とinfo候補10種類を目視確認。
+- 一時directoryでFull 800件dry run: automatic pass、duplicate 0、error/warning 0、info 10、spot review 24 groups、Pilot approval hashをmanifestへ保存。
 
 **Completion criteria（完了条件）**
 
@@ -514,7 +517,7 @@ Phase 2A Generator + Smoke/Pilot + Auto QA   [Completed]
 Phase 2B Human Review                        [Approved]
           |
           v
-Phase 2C Full Generation + Final Data QA     [Ready]
+Phase 2C Full Generation + Final Data QA     [Implementation complete; execution pending]
           |
           v
 Phase 3 Dependencies + Common Folds + Models [Planned]
@@ -615,7 +618,7 @@ Phase 7 Report / PDF / Finalization          [Planned]
 
 ### 未確認事項
 
-- Full約800件の生成方式、template variationの再利用単位、ID規則、最終重複・leak閾値。
+- Full正式生成後の24件spot reviewとinfo候補10件の最終判断。
 - 大学課題10の要件原本。特にBERT比較の必須/任意、提出形式、評価指標の指定。
 - Phase 3のFold artifact正本形式。project rulesのCSV指定とPhase 1 schema文書のJSON preferredを整合させる必要がある。
 - scikit-learnのPython 3.14互換性と確定version。
@@ -624,8 +627,8 @@ Phase 7 Report / PDF / Finalization          [Planned]
 
 ### 直近アクション
 
-1. Phase 2C開始時にFull約800件の一意な生成規則と品質Gateを確定し、review済み設定変更としてFullを有効化する。
-2. Fullを生成し、重複・内容リーク・balance・hash・manifest検査を再実行する。
-3. Fullの目視sampleとinfo候補を確認する。
-4. Full hash・template groupを固定してPhase 2完了を記録する。
+1. Phase 2C実装をcommit/pushし、local/remote同期とworking tree cleanを確認する。
+2. Fullを2回生成し、重複・内容リーク・balance・hash・manifest検査を再実行する。
+3. Full 24件spot sampleとinfo候補を確認する。
+4. Full hash・template group・承認証拠を固定してPhase 2完了を記録する。
 5. Phase 3開始時にdependency/Fold形式/Core条件の詳細計画を承認する。

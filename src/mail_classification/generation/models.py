@@ -29,7 +29,10 @@ class QualityThresholds(BaseModel):
     max_exact_duplicate_groups: int = Field(ge=0)
     max_normalized_duplicate_groups: int = Field(ge=0)
     exclusive_feature_min_count: int = Field(gt=1)
+    full_exclusive_feature_min_count: int = Field(gt=1)
     max_shared_component_ratio_deviation: float = Field(ge=0, le=1)
+    max_template_group_count_difference: int = Field(ge=0)
+    max_difficulty_count_difference: int = Field(ge=0)
     review_samples_per_label: int = Field(gt=0)
     required_difficulties: list[Difficulty] = Field(min_length=1)
 
@@ -40,12 +43,16 @@ class OutputPaths(BaseModel):
     templates: str
     smoke_data: str
     pilot_data: str
+    full_data: str
+    pilot_review_decision: str
     quality_dir: str
     manifest_dir: str
 
     _nonblank_templates = field_validator("templates")(require_nonblank)
     _nonblank_smoke = field_validator("smoke_data")(require_nonblank)
     _nonblank_pilot = field_validator("pilot_data")(require_nonblank)
+    _nonblank_full = field_validator("full_data")(require_nonblank)
+    _nonblank_decision = field_validator("pilot_review_decision")(require_nonblank)
     _nonblank_quality = field_validator("quality_dir")(require_nonblank)
     _nonblank_manifest = field_validator("manifest_dir")(require_nonblank)
 
@@ -54,11 +61,13 @@ class GeneratorSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     version: str
+    full_version: str
     seed: int = Field(ge=0)
     deterministic_generated_at: datetime
     variations_per_template: int = Field(gt=0)
 
     _nonblank_version = field_validator("version")(require_nonblank)
+    _nonblank_full_version = field_validator("full_version")(require_nonblank)
     _aware_timestamp = field_validator("deterministic_generated_at")(
         require_aware_datetime
     )
@@ -77,12 +86,12 @@ class GenerationConfig(BaseModel):
     def validate_stages(self) -> "GenerationConfig":
         if set(self.stages) != {"smoke", "pilot", "full"}:
             raise ValueError("stages must contain exactly smoke, pilot, and full")
-        if self.stages["full"].enabled:
-            raise ValueError("full stage must remain disabled until human Pilot approval")
         if not 4 <= self.stages["smoke"].count <= 8:
             raise ValueError("smoke count must be between 4 and 8")
         if not 80 <= self.stages["pilot"].count <= 120:
             raise ValueError("pilot count must be between 80 and 120")
+        if self.stages["full"].count != 800:
+            raise ValueError("full count must be exactly 800")
         return self
 
 

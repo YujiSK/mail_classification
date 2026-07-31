@@ -72,3 +72,4 @@
 - 2026-07-31 11:51:59 +07 — **完了**: Markdown/BeautifulSoup/pdfplumberを`reporting` groupへ分離し、Pydantic/PyYAMLのみをCore runtime依存、pytestを`dev`とした。sandbox内初回lock/all-groups同期はDNS制限で失敗したが、許可環境で解決。Core-only同期ではreporting 3 moduleが存在しないことと`77 passed in 0.33s`、all-groups同期では3 module import成功と`77 passed in 0.31s`、`uv lock --check`、`git diff --check`成功を確認。
 - 2026-07-31 11:51:59 +07 — **結果**: 現在の実行環境はPython 3.14.4。Phase 2のscikit-learnはまだ追加せず、Phase 2開始時にuvで解決・lock・import・最小Pipeline実行を確認する方針とした。現時点でPython version変更は行わない。
 - 2026-07-31 11:51:59 +07 — **開始**: 依存group分離と日報をcommit後、`origin/agent/pdf-renderer-port`へPhase 1一式をpushして固定する。
+- 2026-07-31 11:52:31 +07 — **完了**: Phase 1本体`80c5f52`と依存境界補正`a01d49a`を`origin/agent/pdf-renderer-port`へpush成功。local HEADとremote-tracking HEADが`a01d49a7b46dde732ae8908708240d0b1381fa69`で一致し、push直後のworking treeはclean。本公開完了記録を追加commitして再同期する。

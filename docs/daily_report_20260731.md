@@ -78,3 +78,4 @@
 
 - 2026-07-31 12:09:03 +07 — **開始**: 正式固定済みPhase 1 HEAD `8b78261`を起点にPhase 2用branchを作成・公開する。Phase 2は合成mailのtemplate/variation、seed固定生成、Smoke/Pilot、完全一致・正規化後重複、内容leak、class/difficulty/文書長品質、目視sample、Pilot合格後約800件生成に限定する。
 - 2026-07-31 12:09:03 +07 — **結果**: cleanな`8b78261`から`agent/task10-phase2-data-generation`を作成。scikit-learn追加・Python 3.14互換確認はPhase 3へ延期し、Phase 2ではTF-IDF、分類器、CV、scikit-learn、BERT、MinHashを実装しない。本記録のみをcommitしてupstreamを設定する。
+- 2026-07-31 12:09:29 +07 — **完了**: 開始記録を`577557b`（`Start Phase 2 data generation branch`）としてcommitし、`origin/agent/task10-phase2-data-generation`を新規pushしてupstream設定に成功。local/remote-tracking HEAD一致、push直後のworking tree clean。本公開完了記録を追加commitして再同期する。

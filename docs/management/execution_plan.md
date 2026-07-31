@@ -250,7 +250,9 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 - Actual: `In progress`
 - 完了: scikit-learn `1.9.0`を`pyproject.toml`の`[project.dependencies]`（Core）へ追加し、Python 3.14.4でresolve/lock/import/最小`TfidfVectorizer→LinearSVC`・`LogisticRegression` Pipeline fitを検証済み（commit `9c08871`）。
 - 完了: `src/mail_classification/evaluation/full_dataset.py`でFullデータhash契約の動的Fail-fast検証（`verify_full_dataset_hash`/`load_verified_full_dataset`）を実装。契約値は`docs/reviews/full_review_decision.json`の`full_data_hash`を実行時参照し、コードへ literal 複製しない。実データ（800件、hash `53c6f8949a2c3c2c75351122e31dff6b43ca6ff8a4d8326947d387b75b9a0bbc`）での一致読込と1byte改変時の`ValueError`raiseを実地検証済み。
-- 未着手: 共通5-fold assignment生成、`StratifiedGroupKFold`採用判断、TF-IDF Pipeline／model factory、Fold保存形式の正本決定。
+- 完了: `src/mail_classification/evaluation/splits.py`で`template_group`監査（`audit_template_groups`）、splitter推奨（`recommend_splitter_name`）、共通5-fold生成（`build_common_folds`）、JSON書き出し（`write_fold_artifact`）を実装。実データ800件は24 groups全て単一labelに属し（spanning 0件）group構造が実在するため`StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)`を採用（`task10_architecture.md`指定パラメータと一致）。`outputs/folds/common_folds.json`（hash `72a62dbffd23c38358744fb2a024a35a14b76747e264fc0abf7ce32c7f7e54c8`、生成物のため`.gitignore`管理・Git非追跡）へ書き出し済み。
+- 既知の限界（Phase 4へ引継ぎ）: labelごとの template group数（6）がn_splits（5）で割り切れないため、各labelにつき必ず1 foldが2 group分（66件）を受け取り、他4 foldsは1 group分（33/34件）となる。`StratifiedGroupKFold`はこの負担をlabelごとに異なるfoldへ分散させ、fold単位validation件数は134〜167件（理想160件に対し約±20%）。データ形状とn_splits設定の数学的必然であり実装不具合ではないが、macro-F1解釈時に留意する。
+- 未着手: TF-IDF Pipeline／model factory、Coreアブレーション条件確定。
 - 既存の`src/mail_classification/schemas/folds.py`はschema/検証契約のみ。
 
 **Prerequisites（前提条件）**
@@ -271,9 +273,9 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 
 - Completed: updated `pyproject.toml`, `uv.lock`（scikit-learn追加）
 - Completed: `src/mail_classification/evaluation/full_dataset.py`とtest（Fullデータhash契約のFail-fast検証）
+- Completed: `src/mail_classification/evaluation/splits.py`とtest（`template_group`監査、splitter推奨、共通5-fold生成、JSON書き出し）
+- Completed: model-independent common Fold artifact at `outputs/folds/common_folds.json`（`fold_artifact_hash`は各experiment run生成時にmanifestへ記録予定、Phase 4で対応）
 - Planned: Core model/split/config modules and tests
-- Planned: model-independent common Fold artifact at a canonical shared path。正確なpathとCSV／JSON source-of-truth形式は実装前に固定する。
-- Planned: 各experiment runのmanifestに共通Fold artifactのpathとhashを記録する。
 - Planned: Phase 3 dependency/Fold/model contract document
 
 **Validation（検証方法）**

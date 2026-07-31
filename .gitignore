@@ -207,6 +207,7 @@ tempCodeRunnerFile.py
 data/raw/*.jsonl
 outputs/data_quality/
 outputs/manifests/
+outputs/folds/
 
 # Ruff stuff:
 .ruff_cache/

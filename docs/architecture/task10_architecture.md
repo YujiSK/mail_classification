@@ -68,9 +68,10 @@ task10/
 │   ├── explain/
 │   └── integration/
 ├── outputs/
+│   ├── folds/
+│   │   └── common_folds.json      # shared across all conditions/models; not per-run
 │   └── runs/<run_id>/
-│       ├── manifest.json
-│       ├── folds.json
+│       ├── manifest.json          # records fold_artifact_path/hash pointing at outputs/folds/
 │       ├── metrics_long.csv
 │       ├── metrics_summary.csv
 │       ├── predictions_oof.csv
@@ -155,7 +156,7 @@ Coreのartifact schema・テスト・再現性が完成するまでExtensionを�
 
 ## 7. 評価フロー
 
-- Foldは一度生成し、`FoldArtifact`契約（`docs/schemas/fold_artifact_schema.md`）に従い単一の`folds.json`として保存。
+- Foldは一度生成し、`FoldArtifact`契約（`docs/schemas/fold_artifact_schema.md`）に従い`outputs/folds/common_folds.json`へ単一ファイルとして保存する（run_id配下に複製しない）。各runの`manifest.json`は`fold_artifact_path`/`fold_artifact_hash`でこの共有ファイルを参照する。
 - group構造が実在するときのみ`StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)`。
 - 各condition/modelはFold IDとsample IDの完全一致を検証。
 - PipelineをFoldごとに新規生成。

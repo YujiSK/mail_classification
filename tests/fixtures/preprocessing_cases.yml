@@ -1,0 +1,113 @@
+- id: lowercase
+  input: "HELLO World"
+  expected_text: "hello world"
+- id: nfkc_fullwidth_letters
+  input: "ＡＢＣ"
+  expected_text: "abc"
+- id: nfkc_fullwidth_digits
+  input: "１２３"
+  expected_text: "123"
+- id: whitespace_spaces
+  input: "hello   world"
+  expected_text: "hello world"
+- id: whitespace_tabs
+  input: "hello\tworld"
+  expected_text: "hello world"
+- id: whitespace_newlines
+  input: "hello\nworld"
+  expected_text: "hello world"
+- id: smart_double_quotes
+  input: "“Hello”"
+  expected_text: '"hello"'
+- id: smart_single_quotes
+  input: "‘Hello’"
+  expected_text: "'hello'"
+- id: em_dash
+  input: "hello—world"
+  expected_text: "hello-world"
+- id: ellipsis
+  input: "wait…"
+  expected_text: "wait..."
+- id: html_tags
+  input: "<p>Hello <b>world</b></p>"
+  expected_text: "hello world"
+- id: html_entity
+  input: "A &amp; B"
+  expected_text: "a & b"
+- id: url_https
+  input: "See https://example.com/path"
+  expected_contains: ["<url>"]
+- id: url_www
+  input: "See www.example.com"
+  expected_contains: ["<url>"]
+- id: email
+  input: "Write User.Name+tag@example.co.uk"
+  expected_contains: ["<email>"]
+- id: header_from
+  input: "From: agent@example.com\nHello"
+  expected_text: "hello"
+- id: header_subject
+  input: "Subject: Billing question\nPlease help"
+  expected_text: "please help"
+- id: signature
+  input: "Please help\n--\nAlice"
+  expected_text: "please help"
+- id: quoted_line
+  input: "New answer\n> old question"
+  expected_text: "new answer"
+- id: reply_block
+  input: "New answer\nOn Friday, Alice wrote:\nOld text"
+  expected_text: "new answer"
+- id: empty
+  input: ""
+  expected_text: ""
+- id: whitespace_only
+  input: " \t\n "
+  expected_text: ""
+- id: punctuation_only
+  input: "!!!"
+  expected_text: "!!!"
+- id: emoji
+  input: "Help 😅"
+  expected_text: "help 😅"
+- id: mixed_language
+  input: "Reset パスワード"
+  expected_text: "reset パスワード"
+- id: contraction_cannot
+  input: "I cannot login"
+  expected_tokens: ["i", "cannot", "login"]
+- id: contraction_apostrophe
+  input: "I can't login"
+  expected_tokens: ["i", "can't", "login"]
+- id: negation_not
+  input: "This is not working"
+  remove_stopwords: true
+  expected_tokens: ["this", "not", "working"]
+- id: negation_no
+  input: "No refund received"
+  remove_stopwords: true
+  expected_tokens: ["no", "refund", "received"]
+- id: negation_never
+  input: "I never agreed"
+  remove_stopwords: true
+  expected_tokens: ["i", "never", "agreed"]
+- id: negation_without
+  input: "Charged without notice"
+  remove_stopwords: true
+  expected_tokens: ["charged", "without", "notice"]
+- id: stopword_removal
+  input: "Please send the invoice"
+  remove_stopwords: true
+  expected_tokens: ["send", "invoice"]
+- id: numbers
+  input: "Invoice 2026 is late"
+  expected_tokens: ["invoice", "2026", "is", "late"]
+- id: underscore_separator
+  input: "account_support"
+  expected_tokens: ["account", "support"]
+- id: accented_letters
+  input: "CAFÉ"
+  expected_tokens: ["café"]
+- id: duplicate_spaces_after_html
+  input: "<div>A</div><div>B</div>"
+  expected_text: "a b"

@@ -1,0 +1,36 @@
+schema_version: "1.0"
+project:
+  name: mail-classification
+  primary_metric: macro_f1
+  labels:
+    - product_inquiry
+    - technical_issue
+    - billing
+    - account_support
+seeds:
+  data: 42
+  folds: 42
+folds:
+  n_splits: 5
+  group_column: template_group
+preprocessing:
+  name: english_minimal
+  version: "1.0.0"
+  cleaning:
+    enabled: true
+    remove_headers: true
+    remove_signatures: true
+    remove_quoted_reply: true
+    remove_html: true
+    replace_urls: true
+    replace_emails: true
+  normalization:
+    enabled: true
+    unicode_nfkc: true
+    normalize_punctuation: true
+    normalize_whitespace: true
+    lowercase: true
+  segmentation:
+    enabled: true
+    remove_stopwords: false
+    lemmatize: false

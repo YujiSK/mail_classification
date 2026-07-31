@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mail-classification"
+version = "0.1.0"
+description = "Contracts and preprocessing foundation for Task 10 mail classification"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+  "beautifulsoup4>=4.12,<5",
+  "markdown>=3.5,<4",
+  "pdfplumber>=0.11,<1",
+  "pydantic>=2.12,<3",
+  "pyyaml>=6,<7",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=9,<10",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mail_classification"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

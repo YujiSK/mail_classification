@@ -50,3 +50,17 @@
 - 2026-07-31 10:51:12 +07 — **完了**: task10派生builder/rendererをB、元課題9版をB、安全設計思想をC、変更なしで再利用できる`timer`のみをAへ統一。テスト表現を「sandbox内27件成功＋環境制限1件、制限外個別成功、コード起因失敗なし」に統一。変更範囲の時系列証拠を日報へ追記し、末尾空白・`git diff --check`とも問題なし。
 - 2026-07-31 10:51:12 +07 — **開始**: 監査・規約文書一式を明示的にstageし、コミット後に`origin/agent/pdf-renderer-port`へpush。
 - 2026-07-31 10:51:54 +07 — **完了**: 監査・規約文書7ファイルをコミット`db7b869`（`Add prior-artifact audit and project rules`）として作成し、`origin/agent/pdf-renderer-port`へpush成功。完了記録を追加コミットして再同期する。
+
+## Phase 1 — Schema・前処理契約基盤
+
+- 2026-07-31 11:28:06 +07 — **開始**: Python package/依存管理、raw data/run manifest/Fold artifact schema、英語3層前処理interface・最小実装、30件以上の前処理test、schema test、最小設定、契約文書を実装する。合成data生成、TF-IDF、model、学習/CV、OOF、BERT/MinHash、report/PDF変更は対象外。
+- 2026-07-31 11:28:06 +07 — **結果**: 開始時Gitは`agent/pdf-renderer-port`、HEAD `36a38f9`、working tree clean。systemの`python` commandは不在、`python3`と共有venvはPython 3.14.4。共有venvにはPydantic 2.13.4、pytest 9.1.1、PyYAML 6.0.3が存在。`uv` command/moduleは不在。規約5文書を確認し、想定外変更なし。
+- 2026-07-31 11:28:06 +07 — **開始**: `uv`導入可否の確認と、`pyproject.toml`＋`uv.lock`を依存関係の正本とするpackage管理基盤の構築。既存`requirements.txt`は正本競合を避けるため内容をpyprojectへ統合後に廃止予定。
+- 2026-07-31 11:39:08 +07 — **完了**: 共有venvへ`uv 0.12.0`を導入し、Python `>=3.11,<3.15`、project名`mail-classification`、import名`mail_classification`の`pyproject.toml`と`uv.lock`を作成。既存rendererで使用中のMarkdown/BeautifulSoup/pdfplumber/PyYAML、Phase 1で使用するPydantic、開発用pytestを用途確認のうえ統合し、競合する`requirements.txt`を廃止。`uv sync --frozen --all-groups`でlockから`.venv`を再構築できた。
+- 2026-07-31 11:39:08 +07 — **完了**: `RawMailRecord`、`RunManifest`、`FoldArtifact`と各metadata/Enum/hash helperを実装。4 label、difficulty、timezone-aware日時、JSON互換metadata/model parameters、SHA-256形式、nullable取得情報、sample重複とtemplate group混在を検証し、`raw_text`を非破壊で保持する契約を確立。
+- 2026-07-31 11:39:08 +07 — **完了**: `Cleaner`/`Normalizer`/`Segmenter`/`Preprocessor` interfaceと英語最小実装を追加。3層の個別ON/OFF、header/signature/quoted reply/HTML除去、URL/email置換、NFKC・空白・句読点・lowercase正規化、token化、stop words切替と否定語保護、統計、version検査を実装。未実装lemmatizationは`true`時に明示例外とした。
+- 2026-07-31 11:39:08 +07 — **完了**: Phase 1最小YAML、schema文書3件、前処理契約文書を作成。前処理fixtureは36具体例。テスト内訳は前処理43、schema30、config/import安全性4の計77件で、lockから同期した`.venv`にて`77 passed in 0.36s`。初回のschema厳格モード起因6失敗とフィールド名補正後1失敗は原因を修正し、最終的なコード起因失敗なし。
+- 2026-07-31 11:39:08 +07 — **結果**: import副作用テストでfile生成・network module setupなし、raw text非破壊、決定性、未知設定拒否を確認。全依存の実import箇所を確認。合成data生成、TF-IDF、分類器、学習/CV、OOF、BERT、MinHashは未実装。PDF renderer/reporting/既存outputsに差分なし。環境上、shell実行ごとに`Failed to create stream fd: Operation not permitted`がstderrへ出るがcommand/test自体は正常完了し、検証範囲への影響なし。未解決の実装不備なし。次Phaseは承認後に合成data生成仕様と品質検査を実装する。
+- 2026-07-31 11:39:08 +07 — **開始**: `uv lock --check`、全test、`git diff --check`、scope差分を再確認し、成功時のみ指定messageでcommitする。pushは行わない。
+- 2026-07-31 11:39:45 +07 — **完了**: 既定uv cacheがworkspace外read-onlyのため最初の`uv lock --check`は一時file作成時に環境起因で失敗。`UV_CACHE_DIR=/tmp/task10_uv_cache`を指定して再実行し、24 packageのlock整合を確認。続けて`pytest -q`は`77 passed in 0.35s`、`git diff --check`は問題なし。renderer/reporting/outputs差分なし、対象外model/data/CV実装なしを再確認。指定messageでcommitし、pushしない。
+- 2026-07-31 11:40:27 +07 — **完了**: staged差分検査で検出した12ファイルの末尾余分空行を修正後、`git diff --cached --check`成功、最終`pytest -q`は`77 passed in 0.53s`。`Implement task10 schemas and preprocessing contracts`として単一commitを作成し、本完了記録を同commitへamendする。pushは未実施。

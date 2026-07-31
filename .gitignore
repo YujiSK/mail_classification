@@ -203,6 +203,11 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# Reproducible Phase 2 generated data and quality artifacts
+data/raw/*.jsonl
+outputs/data_quality/
+outputs/manifests/
+
 # Ruff stuff:
 .ruff_cache/
 

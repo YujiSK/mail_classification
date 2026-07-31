@@ -14,6 +14,8 @@ def test_import_has_no_file_generation_or_network_setup(tmp_path: Path) -> None:
             "import sys; import mail_classification; "
             "import mail_classification.schemas; "
             "import mail_classification.preprocessing; "
+            "import mail_classification.generation; "
+            "import mail_classification.quality; "
             "assert not any(name in sys.modules for name in "
             "('requests', 'urllib.request', 'socket'))"
         ),

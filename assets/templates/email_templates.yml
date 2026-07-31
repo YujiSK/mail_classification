@@ -1,0 +1,222 @@
+schema_version: "1.0"
+shared:
+  greetings:
+    - "Hello,"
+    - "Hi support team,"
+    - "Good morning,"
+    - "Hello there,"
+    - "Hi,"
+    - "Good afternoon,"
+  closings:
+    - "Thank you for your help."
+    - "Please let me know what to do next."
+    - "I appreciate your guidance."
+    - "Could you advise me?"
+    - "Thanks in advance."
+    - "I look forward to your reply."
+  signatures:
+    - ["--", "Alex Morgan", "Northwind Studio"]
+    - ["--", "Jordan Lee", "Blue Oak Workshop"]
+    - ["--", "Taylor Kim", "Riverside Lab"]
+    - ["--", "Casey Smith", "Maple Street Design"]
+    - ["--", "Riley Chen", "Hilltop Services"]
+    - ["--", "Morgan Patel", "Cedar Works"]
+  senders:
+    - "alex@example.net"
+    - "jordan@example.org"
+    - "taylor@example.com"
+    - "casey@example.net"
+    - "riley@example.org"
+    - "morgan@example.com"
+  subjects:
+    - "Request for assistance"
+    - "A question about my service"
+    - "Could you clarify this?"
+    - "Help with a recent experience"
+    - "Information needed"
+    - "Follow-up question"
+  quoted_replies:
+    - ["> Thank you for contacting us.", "> Please share more details."]
+    - ["> We received your earlier message.", "> Our team will review it."]
+    - ["> This is an automated acknowledgement.", "> Keep this reference for your records."]
+
+templates:
+  - template_id: tpl001
+    template_group: tg001
+    label: product_inquiry
+    difficulty: easy
+    contexts: ["I am comparing options for a small office.", "Our team is planning a new deployment.", "I am reviewing the available package.", "We may adopt the service next month."]
+    main_requests: ["Which operating systems are supported?", "Does it work on both desktop and mobile devices?", "What environments can run the client?", "Could you list the supported platforms?"]
+    secondary_details: ["Compatibility matters more than price.", "We use a mix of recent devices.", "No purchase has been made yet.", "This is for a future rollout."]
+  - template_id: tpl002
+    template_group: tg002
+    label: product_inquiry
+    difficulty: easy
+    contexts: ["I am looking at the standard plan.", "We need a tool for a growing team.", "I saw a demonstration last week.", "I am checking what is included."]
+    main_requests: ["Can several people collaborate at the same time?", "Does the service include export to common file formats?", "Is offline use available?", "Can an administrator manage user permissions?"]
+    secondary_details: ["I only need feature information.", "We have not opened an account.", "This is not an error report.", "A short feature summary would help."]
+  - template_id: tpl003
+    template_group: tg003
+    label: product_inquiry
+    difficulty: medium
+    contexts: ["I have access to a trial but the next step is unclear.", "The setup guide mentions several installation choices.", "Our staff will configure the service without a consultant.", "I am preparing instructions for colleagues."]
+    main_requests: ["What is the recommended way to install it?", "Where can I find the initial setup steps?", "Can it be deployed without administrator access?", "How should a new workspace be configured?"]
+    secondary_details: ["Nothing has failed so far.", "I cannot find a concise getting-started page.", "The goal is guidance rather than repair.", "We would prefer a simple procedure."]
+  - template_id: tpl004
+    template_group: tg004
+    label: product_inquiry
+    difficulty: medium
+    contexts: ["Our office has strict network rules.", "We are evaluating service requirements.", "The team often works away from the office.", "I need details before requesting approval."]
+    main_requests: ["Does normal use require a continuous connection?", "What bandwidth is recommended?", "Can updates be installed manually?", "Is access available through a web browser?"]
+    secondary_details: ["The current connection is working.", "No outage is involved.", "We have never used this tool before.", "This question is about expected operation."]
+  - template_id: tpl005
+    template_group: tg005
+    label: product_inquiry
+    difficulty: hard
+    contexts: ["I want to confirm a feature before deciding what to do.", "The trial displayed an error once, but my main concern is capability.", "A colleague reported a warning during evaluation.", "I can access the trial and need clarification."]
+    main_requests: ["Can the service import encrypted archives?", "Is there a way to connect it with our calendar?", "Does the product support custom approval steps?", "Can reports be scheduled without manual action?"]
+    secondary_details: ["The warning is secondary and I am not requesting troubleshooting yet.", "An error appeared, although feature support is the main question.", "I don't need the warning investigated in this request.", "Please focus on whether the feature exists."]
+    multi_intent: true
+    secondary_intent: "a trial warning was observed"
+  - template_id: tpl006
+    template_group: tg006
+    label: product_inquiry
+    difficulty: hard
+    contexts: ["The service is operating normally.", "I can use the basic screen without difficulty.", "Nothing appears to be broken.", "I have access and no failure message is shown."]
+    main_requests: ["How can I configure automatic reminders?", "What is the correct way to change the workspace layout?", "How do I enable notifications for selected events?", "Where are the settings for team-wide defaults?"]
+    secondary_details: ["This is not an outage.", "I can't find the instructions, but the system still works.", "I need setup guidance rather than a repair.", "There is no error; I only need the procedure."]
+
+  - template_id: tpl007
+    template_group: tg007
+    label: technical_issue
+    difficulty: easy
+    contexts: ["The desktop application was working yesterday.", "I installed the latest update this morning.", "The service opens normally at first.", "I can reach the main screen."]
+    main_requests: ["It closes whenever I open a saved file.", "The program crashes after I select Export.", "An error appears each time I start a sync.", "The window freezes when I upload a document."]
+    secondary_details: ["Restarting did not help.", "No settings were changed manually.", "The problem happens every time.", "I cannot complete the task."]
+  - template_id: tpl008
+    template_group: tg008
+    label: technical_issue
+    difficulty: easy
+    contexts: ["My internet connection works for other sites.", "Other applications can reach the network.", "The browser itself is online.", "The device has a stable connection."]
+    main_requests: ["The service cannot connect to the server.", "Access fails with a timeout message.", "The client never finishes loading the workspace.", "I can't reach the dashboard from this device."]
+    secondary_details: ["It worked earlier today.", "There is no proxy change.", "A colleague can connect from another machine.", "The failure affects repeated attempts."]
+  - template_id: tpl009
+    template_group: tg009
+    label: technical_issue
+    difficulty: medium
+    contexts: ["A recent operation takes much longer than before.", "The service eventually responds.", "Our team can still complete the work.", "The same files used to open quickly."]
+    main_requests: ["Why has performance become so slow?", "Can you help identify the repeated delay?", "What should I collect to diagnose the slowdown?", "The screen pauses for a minute after each action; how can this be fixed?"]
+    secondary_details: ["There is no complete outage.", "The account itself remains accessible.", "It never used to behave this way.", "The issue occurs without an error code."]
+  - template_id: tpl010
+    template_group: tg010
+    label: technical_issue
+    difficulty: medium
+    contexts: ["The mobile device shows a full battery.", "The unit was connected overnight.", "The cable works with another device.", "The indicator turns on briefly."]
+    main_requests: ["It will not hold a charge.", "The battery never rises above ten percent.", "Charging stops after a few minutes.", "The device cannot charge through the supplied port."]
+    secondary_details: ["This is unrelated to an invoice charge.", "No payment question is involved.", "The power level keeps falling.", "I tried more than one outlet."]
+  - template_id: tpl011
+    template_group: tg011
+    label: technical_issue
+    difficulty: hard
+    contexts: ["A payment was accepted, but the service is unavailable.", "The renewal completed and then access stopped.", "I was charged this morning and the application now shows an outage.", "The receipt arrived, although the workspace will not load."]
+    main_requests: ["Please restore access to the unavailable service.", "Can you investigate why the paid service cannot be used?", "The connection failure is my main concern.", "Please help resolve the outage first."]
+    secondary_details: ["I am not asking for a refund at this stage.", "The payment is context, not the requested action.", "I only mention the receipt to explain the timing.", "The service failure is more urgent than the charge."]
+    multi_intent: true
+    secondary_intent: "a recent payment provides context"
+  - template_id: tpl012
+    template_group: tg012
+    label: technical_issue
+    difficulty: hard
+    contexts: ["The credentials are accepted on another device.", "I can sign in through the website.", "My profile details appear correct.", "The password reset completed successfully."]
+    main_requests: ["The desktop client still cannot synchronize.", "An authentication error prevents the application from connecting.", "The client rejects the session after login.", "The application loses access immediately after authentication."]
+    secondary_details: ["The password itself is not the problem.", "Please investigate the connection behavior.", "I don't need another password reset.", "The failure seems to occur after sign-in."]
+
+  - template_id: tpl013
+    template_group: tg013
+    label: billing
+    difficulty: easy
+    contexts: ["I reviewed my latest statement.", "A new receipt appeared today.", "I checked the card activity.", "The monthly statement is available."]
+    main_requests: ["Why was the same amount charged twice?", "Please explain the second charge.", "There are two identical payments for one order.", "Can you correct a duplicate payment?"]
+    secondary_details: ["Only one purchase was made.", "Both entries have the same date.", "No second order exists.", "The service itself works normally."]
+  - template_id: tpl014
+    template_group: tg014
+    label: billing
+    difficulty: easy
+    contexts: ["I need to update how future payments are made.", "The current card will expire soon.", "Our finance team issued a replacement card.", "I am preparing for the next renewal."]
+    main_requests: ["How can I change the payment method?", "Where do I update the card on file?", "Can future invoices use a different card?", "What steps replace the current payment details?"]
+    secondary_details: ["No payment has failed.", "This is for the next cycle.", "The current subscription remains active.", "I still have access."]
+  - template_id: tpl015
+    template_group: tg015
+    label: billing
+    difficulty: medium
+    contexts: ["The total on the statement is higher than expected.", "I am reconciling this month's costs.", "The receipt lists several line items.", "Our finance team asked for clarification."]
+    main_requests: ["Could you explain how this amount was calculated?", "What does the additional line item cover?", "Please provide a breakdown of the total.", "Why is the renewal amount different from last month?"]
+    secondary_details: ["I am not requesting a refund.", "No chargeback is planned.", "I only want to understand the statement.", "The service is available as usual."]
+  - template_id: tpl016
+    template_group: tg016
+    label: billing
+    difficulty: medium
+    contexts: ["A cancellation was submitted recently.", "The subscription ended last week.", "I received confirmation that the plan stopped.", "The account no longer shows an active plan."]
+    main_requests: ["When should the refund reach my card?", "Can you confirm the refund status?", "The credit has not appeared; what is the expected timing?", "Please check whether the repayment was issued."]
+    secondary_details: ["I cannot see a credit yet.", "It has never appeared on the statement.", "The original payment is visible.", "I have the cancellation reference."]
+  - template_id: tpl017
+    template_group: tg017
+    label: billing
+    difficulty: hard
+    contexts: ["I cannot log in and also need to stop the next renewal.", "Access to the profile is blocked while the plan remains active.", "The sign-in page rejects me and a renewal is approaching.", "I am locked out before the next payment date."]
+    main_requests: ["My main request is to prevent the upcoming renewal.", "Please explain how to cancel without profile access.", "Can the subscription be ended before another payment?", "I need the contract stopped even though I cannot sign in."]
+    secondary_details: ["Restoring login would help, but stopping payment is the priority.", "The access problem is secondary to cancellation.", "Please do not wait for a password reset to stop renewal.", "I need both addressed, with cancellation first."]
+    multi_intent: true
+    secondary_intent: "profile access is also blocked"
+  - template_id: tpl018
+    template_group: tg018
+    label: billing
+    difficulty: hard
+    contexts: ["A charge is shown on the statement.", "The invoice contains an unfamiliar description.", "I received a receipt I do not recognize.", "The amount differs from my notes."]
+    main_requests: ["Please clarify the charge rather than refunding it.", "I don't want a refund; I want an explanation.", "Do not reverse it yet; first tell me what it covers.", "Can you identify the item without starting a refund?"]
+    secondary_details: ["I have not said the payment is unauthorized.", "No cancellation is requested.", "The service is still in use.", "I can't match the description to a feature."]
+
+  - template_id: tpl019
+    template_group: tg019
+    label: account_support
+    difficulty: easy
+    contexts: ["I am at the sign-in page.", "The profile worked yesterday.", "I am using my usual device.", "The service recognizes my email address."]
+    main_requests: ["I can't log in with my current password.", "The password is rejected every time.", "How can I regain access after forgetting the password?", "The sign-in attempt never succeeds."]
+    secondary_details: ["No payment question is involved.", "I need access to my existing profile.", "The reset link has not been requested yet.", "I can receive email normally."]
+  - template_id: tpl020
+    template_group: tg020
+    label: account_support
+    difficulty: easy
+    contexts: ["I recently changed employers.", "The old email address will be closed.", "I still have access to my profile.", "My contact details need an update."]
+    main_requests: ["How do I change the email address on my profile?", "Where can I replace the sign-in email?", "Can support update my contact address?", "What is the process for using a new email?"]
+    secondary_details: ["The current credentials still work.", "No service error is shown.", "I want to keep the same profile.", "The plan should remain unchanged."]
+  - template_id: tpl021
+    template_group: tg021
+    label: account_support
+    difficulty: medium
+    contexts: ["Several unsuccessful attempts were made.", "The profile now shows a lock message.", "I waited before trying again.", "The sign-in screen says access is restricted."]
+    main_requests: ["How can the profile be unlocked?", "Please restore access after the lockout.", "What verification is needed to remove the lock?", "Can you help me regain access without creating a new profile?"]
+    secondary_details: ["I never requested closure.", "The password may be correct now.", "I can answer verification questions.", "There is no invoice problem."]
+  - template_id: tpl022
+    template_group: tg022
+    label: account_support
+    difficulty: medium
+    contexts: ["A security code is required after sign-in.", "The verification screen appears normally.", "My password is accepted.", "The first sign-in step succeeds."]
+    main_requests: ["The authentication code never arrives.", "I cannot complete verification without the code.", "The code is sent to an old phone; how can I update it?", "Why does the valid code keep getting rejected?"]
+    secondary_details: ["The password itself is correct.", "I don't want to disable security.", "No outage message appears.", "The problem begins at verification."]
+  - template_id: tpl023
+    template_group: tg023
+    label: account_support
+    difficulty: hard
+    contexts: ["The password is definitely correct.", "I verified the credentials on another screen.", "A reset produced the same result.", "The sign-in form accepts the password."]
+    main_requests: ["Authentication still does not complete.", "The second verification step prevents access.", "Please help with the failed identity check.", "The session cannot pass the security prompt."]
+    secondary_details: ["Another password reset is not needed.", "I cannot access settings until verification succeeds.", "There is no forgotten-password issue.", "The failure occurs after the correct password."]
+  - template_id: tpl024
+    template_group: tg024
+    label: account_support
+    difficulty: hard
+    contexts: ["I can sign in but two profile settings seem inconsistent.", "The profile is accessible and the service is running.", "Nothing is currently unavailable.", "I have normal access to the dashboard."]
+    main_requests: ["How can I change the default security preferences?", "Where do I manage trusted devices?", "What steps update recovery options?", "How can I configure sign-in notifications?"]
+    secondary_details: ["This is not a technical failure, and I also want to review the recovery email.", "I don't have an outage; a secondary question is how to remove an old trusted device.", "I mainly need instructions for the profile settings and also want to check recovery options.", "No error needs investigation, though I also need to update sign-in alerts."]
+    multi_intent: true
+    secondary_intent: "a second profile setting also needs guidance"

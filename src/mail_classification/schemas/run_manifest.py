@@ -45,6 +45,9 @@ class RunManifest(BaseModel):
     data_path: str | None
     data_hash: Sha256Hex | None
     data_generation_seed: int | None = Field(ge=0)
+    template_path: str | None = None
+    template_hash: Sha256Hex | None = None
+    generator_version: str | None = None
     cv_seed: int | None = Field(ge=0)
     fold_artifact_path: str | None
     fold_artifact_hash: Sha256Hex | None

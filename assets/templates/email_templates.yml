@@ -39,45 +39,50 @@ shared:
     - ["> Thank you for contacting us.", "> Please share more details."]
     - ["> We received your earlier message.", "> Our team will review it."]
     - ["> This is an automated acknowledgement.", "> Keep this reference for your records."]
+  urgency_lines:
+    - ""
+    - "A prompt response would be helpful."
+    - "There is no immediate deadline."
+    - "Please respond when practical."
 
 templates:
   - template_id: tpl001
     template_group: tg001
     label: product_inquiry
     difficulty: easy
-    contexts: ["I am comparing options for a small office.", "Our team is planning a new deployment.", "I am reviewing the available package.", "We may adopt the service next month."]
+    contexts: ["I am comparing options for a small organization.", "A team is planning a new deployment.", "I am reviewing the available package.", "I may adopt the service next month."]
     main_requests: ["Which operating systems are supported?", "Does it work on both desktop and mobile devices?", "What environments can run the client?", "Could you list the supported platforms?"]
-    secondary_details: ["Compatibility matters more than price.", "We use a mix of recent devices.", "No purchase has been made yet.", "This is for a future rollout."]
+    secondary_details: ["Compatibility matters more than price.", "The team uses a mix of recent devices.", "No purchase has been made yet.", "This is for a future rollout."]
   - template_id: tpl002
     template_group: tg002
     label: product_inquiry
     difficulty: easy
-    contexts: ["I am looking at the standard plan.", "We need a tool for a growing team.", "I saw a demonstration last week.", "I am checking what is included."]
+    contexts: ["I am looking at the standard plan.", "I need a tool for a growing team.", "I saw a demonstration last week.", "I am checking what is included."]
     main_requests: ["Can several people collaborate at the same time?", "Does the service include export to common file formats?", "Is offline use available?", "Can an administrator manage user permissions?"]
-    secondary_details: ["I only need feature information.", "We have not opened an account.", "This is not an error report.", "A short feature summary would help."]
+    secondary_details: ["I only need feature information.", "No account has been opened yet.", "This is not an error report.", "A short feature summary would help."]
   - template_id: tpl003
     template_group: tg003
     label: product_inquiry
     difficulty: medium
     contexts: ["I have access to a trial but the next step is unclear.", "The setup guide mentions several installation choices.", "Our staff will configure the service without a consultant.", "I am preparing instructions for colleagues."]
     main_requests: ["What is the recommended way to install it?", "Where can I find the initial setup steps?", "Can it be deployed without administrator access?", "How should a new workspace be configured?"]
-    secondary_details: ["Nothing has failed so far.", "I cannot find a concise getting-started page.", "The goal is guidance rather than repair.", "We would prefer a simple procedure."]
+    secondary_details: ["Nothing has failed so far.", "I cannot find a concise getting-started page.", "The goal is guidance rather than repair.", "A simple procedure would be preferable."]
   - template_id: tpl004
     template_group: tg004
     label: product_inquiry
     difficulty: medium
-    contexts: ["Our office has strict network rules.", "We are evaluating service requirements.", "The team often works away from the office.", "I need details before requesting approval."]
+    contexts: ["The organization has strict network rules.", "I am evaluating service requirements.", "The team often works away from its usual location.", "I need details before requesting approval."]
     main_requests: ["Does normal use require a continuous connection?", "What bandwidth is recommended?", "Can updates be installed manually?", "Is access available through a web browser?"]
-    secondary_details: ["The current connection is working.", "No outage is involved.", "We have never used this tool before.", "This question is about expected operation."]
+    secondary_details: ["The current connection is working.", "No outage is involved.", "I have never used this tool before.", "This question is about expected operation."]
   - template_id: tpl005
     template_group: tg005
     label: product_inquiry
     difficulty: hard
-    contexts: ["I want to confirm a feature before deciding what to do.", "The trial displayed an error once, but my main concern is capability.", "A colleague reported a warning during evaluation.", "I can access the trial and need clarification."]
+    contexts: ["A warning appeared once during testing, but I still need to confirm a feature.", "A temporary installation displayed an error once, but my main concern is capability.", "A colleague reported a warning during evaluation.", "I can access a demonstration environment and need clarification."]
     main_requests: ["Can the service import encrypted archives?", "Is there a way to connect it with our calendar?", "Does the product support custom approval steps?", "Can reports be scheduled without manual action?"]
-    secondary_details: ["The warning is secondary and I am not requesting troubleshooting yet.", "An error appeared, although feature support is the main question.", "I don't need the warning investigated in this request.", "Please focus on whether the feature exists."]
+    secondary_details: ["Troubleshooting that message is secondary to the feature question.", "An error appeared, although feature support is the main question.", "I don't need the warning investigated in this request.", "Please focus on whether the feature exists."]
     multi_intent: true
-    secondary_intent: "a trial warning was observed"
+    secondary_intent: "an evaluation warning was observed"
   - template_id: tpl006
     template_group: tg006
     label: product_inquiry
@@ -157,7 +162,7 @@ templates:
     label: billing
     difficulty: medium
     contexts: ["A cancellation was submitted recently.", "The subscription ended last week.", "I received confirmation that the plan stopped.", "The account no longer shows an active plan."]
-    main_requests: ["When should the refund reach my card?", "Can you confirm the refund status?", "The credit has not appeared; what is the expected timing?", "Please check whether the repayment was issued."]
+    main_requests: ["When should the refund reach my card?", "Can you confirm the refund status?", "The credit has not appeared; what is the expected timing?", "Please check whether the refund was issued."]
     secondary_details: ["I cannot see a credit yet.", "It has never appeared on the statement.", "The original payment is visible.", "I have the cancellation reference."]
   - template_id: tpl017
     template_group: tg017
@@ -174,7 +179,7 @@ templates:
     difficulty: hard
     contexts: ["A charge is shown on the statement.", "The invoice contains an unfamiliar description.", "I received a receipt I do not recognize.", "The amount differs from my notes."]
     main_requests: ["Please clarify the charge rather than refunding it.", "I don't want a refund; I want an explanation.", "Do not reverse it yet; first tell me what it covers.", "Can you identify the item without starting a refund?"]
-    secondary_details: ["I have not said the payment is unauthorized.", "No cancellation is requested.", "The service is still in use.", "I can't match the description to a feature."]
+    secondary_details: ["I have not said the payment is unauthorized.", "No cancellation is requested.", "I can't identify which purchase it refers to.", "I don't recognize this charge."]
 
   - template_id: tpl019
     template_group: tg019
@@ -196,7 +201,7 @@ templates:
     difficulty: medium
     contexts: ["Several unsuccessful attempts were made.", "The profile now shows a lock message.", "I waited before trying again.", "The sign-in screen says access is restricted."]
     main_requests: ["How can the profile be unlocked?", "Please restore access after the lockout.", "What verification is needed to remove the lock?", "Can you help me regain access without creating a new profile?"]
-    secondary_details: ["I never requested closure.", "The password may be correct now.", "I can answer verification questions.", "There is no invoice problem."]
+    secondary_details: ["The same password worked earlier today.", "The password may be correct now.", "I can answer verification questions.", "There is no invoice problem."]
   - template_id: tpl022
     template_group: tg022
     label: account_support
@@ -208,15 +213,17 @@ templates:
     template_group: tg023
     label: account_support
     difficulty: hard
-    contexts: ["The password is definitely correct.", "I verified the credentials on another screen.", "A reset produced the same result.", "The sign-in form accepts the password."]
+    contexts: ["The password is definitely correct, but a renewal notice arrived at the same time.", "I verified the credentials on another screen, and a recent charge also needs clarification.", "A reset produced the same result, and a synchronization warning also appeared.", "The sign-in form accepts the password, although I also need feature information."]
     main_requests: ["Authentication still does not complete.", "The second verification step prevents access.", "Please help with the failed identity check.", "The session cannot pass the security prompt."]
-    secondary_details: ["Another password reset is not needed.", "I cannot access settings until verification succeeds.", "There is no forgotten-password issue.", "The failure occurs after the correct password."]
+    secondary_details: ["The renewal can wait; restoring access is my main request.", "Please fix verification first; the charge question is secondary.", "The identity check is the priority; the warning can be handled later.", "Please restore access first; the feature question can wait."]
+    multi_intent: true
+    secondary_intent: "a renewal, charge, synchronization, or feature question is secondary to restoring profile access"
   - template_id: tpl024
     template_group: tg024
     label: account_support
     difficulty: hard
-    contexts: ["I can sign in but two profile settings seem inconsistent.", "The profile is accessible and the service is running.", "Nothing is currently unavailable.", "I have normal access to the dashboard."]
-    main_requests: ["How can I change the default security preferences?", "Where do I manage trusted devices?", "What steps update recovery options?", "How can I configure sign-in notifications?"]
-    secondary_details: ["This is not a technical failure, and I also want to review the recovery email.", "I don't have an outage; a secondary question is how to remove an old trusted device.", "I mainly need instructions for the profile settings and also want to check recovery options.", "No error needs investigation, though I also need to update sign-in alerts."]
+    contexts: ["I can sign in, but a renewal notice also needs attention.", "The profile is accessible, although I also have a question about offline use.", "A synchronization warning appeared while I was reviewing my recovery settings.", "I have normal dashboard access, and a receipt also looks unfamiliar."]
+    main_requests: ["Please help me change the default security preferences first.", "Where do I manage trusted devices?", "What steps update the recovery options?", "How can I configure sign-in notifications?"]
+    secondary_details: ["Afterward, I would also like the invoice total explained.", "Securing the profile is my priority; feature availability is secondary.", "Please address the profile change first and the warning afterward.", "The profile setting is the main request; the charge explanation can follow."]
     multi_intent: true
-    secondary_intent: "a second profile setting also needs guidance"
+    secondary_intent: "an invoice, feature-availability, or synchronization question is secondary to the profile-setting request"

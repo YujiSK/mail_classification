@@ -51,15 +51,19 @@ replies, and urgency lines do not create a new group. `template_id`,
 traceable in every record.
 
 Shared component pools are label-neutral. The seeded generator independently
-chooses structure and component indices, preventing a greeting, sender domain,
-company, subject, punctuation style, or structural flag from being assigned by
-class. Terms such as `charge`, `account`, and `access` deliberately occur in
-more than one semantic setting.
+chooses greetings, senders, signatures, subjects, and structural flags.
+Urgency options are assigned in a deterministic cycle within each label so
+that chance cannot turn urgency into a class shortcut. The selected urgency
+index is stored in metadata and its cross-class distribution is audited.
+Terms such as `charge`, `account`, and `access` deliberately occur in more than
+one semantic setting.
 
 Each class includes negation and at least one multi-intent hard group. Examples
 include paid-but-unavailable service, login plus cancellation, feature inquiry
 plus an observed error, clarification rather than refund, correct password
-with failed verification, and configuration guidance rather than an outage.
+with failed verification, configuration guidance rather than an outage, and a
+profile-setting request paired with a secondary billing, feature, or technical
+question.
 
 ## Stages
 

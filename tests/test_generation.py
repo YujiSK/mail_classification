@@ -1,5 +1,7 @@
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
+import re
 from types import SimpleNamespace
 
 import pytest
@@ -172,6 +174,87 @@ def test_structural_components_are_spread_across_all_labels() -> None:
         assert {
             record.label for record in records if getattr(record, field)
         } == set(MailLabel)
+
+
+def test_urgency_components_are_balanced_across_labels() -> None:
+    records = generator().generate("pilot")
+    counts = {
+        label: Counter(
+            record.metadata["component_indices"]["urgency"]
+            for record in records
+            if record.label == label
+        )
+        for label in MailLabel
+    }
+    assert len({tuple(sorted(count.items())) for count in counts.values()}) == 1
+    assert all(count == 6 for count in counts[MailLabel.PRODUCT_INQUIRY].values())
+
+
+def test_non_intent_we_is_not_class_specific_in_body_text() -> None:
+    labels = {
+        record.label
+        for record in generator().generate("pilot")
+        if re.search(r"\bwe\b", record.body_text, flags=re.IGNORECASE)
+    }
+    assert labels in (set(), set(MailLabel))
+
+
+def test_hard_account_multi_intent_variations_are_distinct_and_natural() -> None:
+    template = next(
+        item for item in CATALOG.templates if item.template_group == "tg024"
+    )
+    assert template.multi_intent
+    assert template.difficulty.value == "hard"
+    assert all(
+        marker in detail.casefold()
+        for marker, detail in zip(
+            ("invoice", "feature", "warning", "charge"),
+            template.secondary_details,
+            strict=True,
+        )
+    )
+    all_text = " ".join(
+        template.contexts + template.main_requests + template.secondary_details
+    )
+    assert "Nothing is currently unavailable." not in all_text
+
+
+def test_review_punch_list_context_and_wording_regressions() -> None:
+    by_group = {item.template_group: item for item in CATALOG.templates}
+    catalog_text = " ".join(
+        text
+        for template in CATALOG.templates
+        for text in (
+            template.contexts
+            + template.main_requests
+            + template.secondary_details
+        )
+    )
+    for rejected_text in (
+        "I never requested closure.",
+        "I can't match the description to a feature.",
+        "Nothing is currently unavailable.",
+        "repayment",
+    ):
+        assert rejected_text not in catalog_text
+
+    feature_warning = by_group["tg005"]
+    assert "warning" in feature_warning.contexts[0].casefold()
+    assert "that message" in feature_warning.secondary_details[0].casefold()
+
+    authentication_trap = by_group["tg023"]
+    assert authentication_trap.difficulty.value == "hard"
+    assert authentication_trap.multi_intent
+    assert all(
+        marker in context.casefold()
+        for marker, context in zip(
+            ("renewal", "charge", "warning", "feature"),
+            authentication_trap.contexts,
+            strict=True,
+        )
+    )
+
+    assert by_group["tg006"].difficulty.value == "hard"
 
 
 def test_pipeline_writes_required_smoke_artifacts(tmp_path: Path) -> None:

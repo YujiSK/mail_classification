@@ -67,10 +67,21 @@ class SyntheticMailGenerator:
             rng.shuffle(candidates)
             candidates = candidates[: stage_config.count]
 
-        records = [
-            self._compose(stage, position, template, variation_id, rng)
-            for position, (template, variation_id) in enumerate(candidates, start=1)
-        ]
+        label_positions: dict[MailLabel, int] = defaultdict(int)
+        records = []
+        for position, (template, variation_id) in enumerate(candidates, start=1):
+            label_position = label_positions[template.label]
+            records.append(
+                self._compose(
+                    stage,
+                    position,
+                    template,
+                    variation_id,
+                    label_position,
+                    rng,
+                )
+            )
+            label_positions[template.label] += 1
         if len({record.id for record in records}) != len(records):
             raise RuntimeError("generated IDs are not unique")
         return records
@@ -81,6 +92,7 @@ class SyntheticMailGenerator:
         position: int,
         template: EmailTemplate,
         variation_id: int,
+        label_position: int,
         rng: random.Random,
     ) -> RawMailRecord:
         shared = self.catalog.shared
@@ -94,14 +106,8 @@ class SyntheticMailGenerator:
         has_header = rng.random() < 0.55
         has_signature = rng.random() < 0.55
         has_quoted_reply = rng.random() < 0.35
-        urgency = rng.choice(
-            [
-                "",
-                "This is time-sensitive, but a careful answer is more important.",
-                "There is no immediate deadline.",
-                "Please respond when practical.",
-            ]
-        )
+        urgency_index = label_position % len(shared.urgency_lines)
+        urgency = shared.urgency_lines[urgency_index]
         body_lines = [
             shared.greetings[greeting_index],
             "",
@@ -164,6 +170,7 @@ class SyntheticMailGenerator:
                     "subject": subject_index,
                     "signature": signature_index if has_signature else None,
                     "quoted_reply": quote_index if has_quoted_reply else None,
+                    "urgency": urgency_index,
                 },
             },
         )

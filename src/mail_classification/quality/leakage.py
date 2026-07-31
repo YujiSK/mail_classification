@@ -129,6 +129,11 @@ def audit_leakage(
             )
 
     _audit_structural_features(records, findings)
+    _audit_shared_component_distribution(
+        records,
+        findings,
+        thresholds.max_shared_component_ratio_deviation,
+    )
     _audit_header_and_signature(records, findings, thresholds.exclusive_feature_min_count)
     _audit_exclusive_lexical(records, findings, thresholds.exclusive_feature_min_count)
     _audit_length(records, findings, thresholds.max_length_mean_ratio)
@@ -161,6 +166,34 @@ def _audit_structural_features(records, findings) -> None:
                         "metadata value occurs in only one class",
                     )
                 )
+
+
+def _audit_shared_component_distribution(records, findings, maximum_deviation) -> None:
+    label_totals = Counter(record.label.value for record in records)
+    if len(label_totals) < 2:
+        return
+    values: dict[object, list[RawMailRecord]] = defaultdict(list)
+    for record in records:
+        indices = record.metadata.get("component_indices")
+        if isinstance(indices, dict) and "urgency" in indices:
+            values[indices["urgency"]].append(record)
+    for value, matches in values.items():
+        counts = Counter(record.label.value for record in matches)
+        ratios = {
+            label: counts[label] / total
+            for label, total in sorted(label_totals.items())
+        }
+        if max(ratios.values()) - min(ratios.values()) > maximum_deviation:
+            findings.append(
+                _finding(
+                    "warning",
+                    "shared_component_distribution",
+                    f"urgency={value}",
+                    matches,
+                    "class occurrence ratios differ beyond the configured threshold: "
+                    + json.dumps(ratios, sort_keys=True),
+                )
+            )
 
 
 def _audit_header_and_signature(records, findings, minimum) -> None:

@@ -29,6 +29,7 @@ class QualityThresholds(BaseModel):
     max_exact_duplicate_groups: int = Field(ge=0)
     max_normalized_duplicate_groups: int = Field(ge=0)
     exclusive_feature_min_count: int = Field(gt=1)
+    max_shared_component_ratio_deviation: float = Field(ge=0, le=1)
     review_samples_per_label: int = Field(gt=0)
     required_difficulties: list[Difficulty] = Field(min_length=1)
 
@@ -94,6 +95,7 @@ class SharedComponents(BaseModel):
     senders: list[str] = Field(min_length=2)
     subjects: list[str] = Field(min_length=2)
     quoted_replies: list[list[str]] = Field(min_length=2)
+    urgency_lines: list[str] = Field(min_length=2)
 
     @field_validator("greetings", "closings", "senders", "subjects")
     @classmethod
@@ -107,6 +109,17 @@ class SharedComponents(BaseModel):
     def validate_line_pool(cls, values: list[list[str]]) -> list[list[str]]:
         if any(not lines or any(not line.strip() for line in lines) for lines in values):
             raise ValueError("multi-line components cannot be empty")
+        return values
+
+    @field_validator("urgency_lines")
+    @classmethod
+    def validate_urgency_pool(cls, values: list[str]) -> list[str]:
+        if values.count("") != 1:
+            raise ValueError("urgency_lines must contain exactly one empty option")
+        if any(not value.strip() for value in values if value):
+            raise ValueError("non-empty urgency lines cannot be blank")
+        if len(values) != len(set(values)):
+            raise ValueError("urgency lines must be unique")
         return values
 
 

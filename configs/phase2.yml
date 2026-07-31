@@ -1,6 +1,6 @@
 schema_version: "1.0"
 generator:
-  version: "1.0.0"
+  version: "1.1.0"
   seed: 20260731
   deterministic_generated_at: "2026-07-31T00:00:00+00:00"
   variations_per_template: 4
@@ -22,6 +22,7 @@ quality:
   max_exact_duplicate_groups: 0
   max_normalized_duplicate_groups: 0
   exclusive_feature_min_count: 4
+  max_shared_component_ratio_deviation: 0.05
   review_samples_per_label: 10
   required_difficulties:
     - easy

@@ -54,3 +54,17 @@ row is marked `revise`/`reject`, any automatic error/warning remains, or
 informational leakage candidates lack a documented decision. Human approval
 must identify reviewer and time and be recorded outside the generated mail
 body. Approval does not authorize model training; that belongs to Phase 3.
+
+After review, preserve the completed CSV and write
+`outputs/data_quality/pilot_review_decision.json` with the reviewer, review
+time, decision, Pilot data hash, template-definition hash, review CSV hash,
+row counts, and an explicit decision for every informational leakage
+candidate. The automatically generated Pilot summary remains an immutable
+pre-review artifact; the separate decision file records the later review
+outcome.
+
+Because `outputs/` is excluded from Git, copy the immutable approval evidence
+to `docs/reviews/pilot_review_decision.json`. The tracked record is the Phase
+Gate source of truth and must include the ignored decision JSON hash as well as
+the Pilot data, template, review CSV, immutable review fields, and leakage
+findings hashes.

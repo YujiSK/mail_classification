@@ -1,0 +1,100 @@
+{
+  "schema_version": "1.0",
+  "phase": "2B",
+  "status": "approved",
+  "approved_at": "2026-07-31T14:36:42+07:00",
+  "reviewer": "Codex manual content review under user direction",
+  "review_basis": "All 60 deterministic Pilot review rows were manually inspected after the final punch-list corrections. Label priority, difficulty, naturalness, negation, multi-intent structure, metadata leakage, structural leakage, shortest and longest samples, and all informational lexical candidates were checked. The review CSV immutable fields were hash-verified before approval.",
+  "pilot_data_hash": "a7679feb78155dbd8ee50b43ff78200bcc3117060ea0811d31cc1a2a7cb98a94",
+  "template_definition_hash": "528ec48123097d0771aa94a7ed216297cdeaf193028c5a87c7bf61eafd48633c",
+  "generator_version": "1.1.0",
+  "reviewed_count": 60,
+  "passed_count": 60,
+  "revise_count": 0,
+  "reject_count": 0,
+  "leakage_info_candidates": 10,
+  "leakage_error_count": 0,
+  "leakage_warning_count": 0,
+  "automatic_quality_pass": true,
+  "review_csv_path": "outputs/data_quality/pilot_review_samples.csv",
+  "review_csv_sha256": "83783700bc771c86e1939379deb21f3d071d25287a93a34bb1072b97d45fda5f",
+  "review_csv_immutable_fields_sha256": "69b8e4033359a2648e13a63f2803586ce5ce038a3ebb0740f7da7302bbf66143",
+  "leakage_findings_path": "outputs/data_quality/pilot_leakage_findings.csv",
+  "leakage_findings_sha256": "0eb773af1a11e5b17dfaf6c8f6f2dadb7f546a8ba6639b617a15b07eadc6fef8",
+  "ignored_decision_path": "outputs/data_quality/pilot_review_decision.json",
+  "ignored_decision_sha256": "b8039a6f05955eff136ad88166302d9250b4e236f6216c35c21a52e75b61155a",
+  "informational_candidate_decisions": [
+    {
+      "category": "class_specific_bigram",
+      "feature": "the statement",
+      "label": "billing",
+      "count": 4,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "address",
+      "label": "account_support",
+      "count": 5,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "amount",
+      "label": "billing",
+      "count": 4,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "application",
+      "label": "technical_issue",
+      "count": 4,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "cancellation",
+      "label": "billing",
+      "count": 5,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "card",
+      "label": "billing",
+      "count": 4,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "email",
+      "label": "account_support",
+      "count": 4,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "security",
+      "label": "account_support",
+      "count": 4,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "statement",
+      "label": "billing",
+      "count": 6,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "verification",
+      "label": "account_support",
+      "count": 4,
+      "decision": "accepted_intent_vocabulary"
+    }
+  ],
+  "phase2c_ready": true,
+  "phase3_authorized": false
+}

@@ -45,7 +45,11 @@ def record(
         template_id=f"t-{record_id}",
         variation_id=0,
         generated_at=datetime(2026, 7, 31, tzinfo=timezone.utc),
-        metadata={"multi_intent": False, "contains_negation": False},
+        metadata={
+            "multi_intent": False,
+            "contains_negation": False,
+            **flags.get("metadata", {}),
+        },
     )
 
 
@@ -167,6 +171,35 @@ def test_metadata_one_to_one_warning_is_detected() -> None:
     ]
     findings = audit_leakage(records, CONFIG.quality)
     assert any(item["category"] == "metadata_one_to_one" for item in findings)
+
+
+def test_shared_urgency_distribution_warning_is_detected() -> None:
+    records = [
+        record(
+            f"b{i}",
+            f"billing request {i}",
+            f"billing request {i}",
+            label="billing",
+            group=f"bg{i}",
+            metadata={"component_indices": {"urgency": 1}},
+        )
+        for i in range(4)
+    ] + [
+        record(
+            f"t{i}",
+            f"technical request {i}",
+            f"technical request {i}",
+            label="technical_issue",
+            group=f"tg{i}",
+            metadata={"component_indices": {"urgency": 0}},
+        )
+        for i in range(4)
+    ]
+    findings = audit_leakage(records, CONFIG.quality)
+    assert any(
+        item["category"] == "shared_component_distribution"
+        for item in findings
+    )
 
 
 def test_leakage_report_rows_have_stable_schema() -> None:

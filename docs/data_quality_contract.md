@@ -31,6 +31,7 @@ The audit checks:
 - too few groups or concentration within one group;
 - header/signature/sender-domain/subject values repeated in one class only;
 - structure flags and difficulty values mapping to one class only;
+- shared urgency component occurrence ratios differing by class;
 - class-exclusive tokens and bigrams above the configured frequency;
 - excessive class mean-length ratio.
 
@@ -56,6 +57,7 @@ version.
 - no exact or normalized duplicate group;
 - largest group share no greater than 0.25;
 - exclusive token/bigram candidate frequency of at least four;
+- maximum cross-class shared-component ratio deviation of 0.05;
 - ten base review samples per class;
 - Pilot must contain easy, medium, and hard examples.
 
@@ -82,10 +84,17 @@ Automatic Pilot quality passes only when:
 Informational lexical candidates do not automatically fail Pilot, but must be
 included in human review.
 
+Shared urgency components are recorded by index in generation metadata and
+must have approximately equal occurrence ratios in every class. A larger
+cross-class deviation is a warning and prevents automatic Pilot approval.
+
 ## Full-generation gate
 
 `automatic_quality_pass: true` is necessary but not sufficient. Pilot summary
 remains `human_review_status: pending` and
 `full_generation_allowed: false`. A human must complete the review CSV,
 evaluate informational candidates, and request any template/rule correction.
-Only a later reviewed configuration change may enable Full generation.
+Only a later reviewed configuration change may enable Full generation. The
+machine-readable approval source of truth is the tracked
+`docs/reviews/pilot_review_decision.json`; ignored output-side evidence alone
+cannot satisfy the Phase Gate.

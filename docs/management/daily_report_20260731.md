@@ -189,3 +189,7 @@
 ### 記録ルールの強化（判断）
 
 - 2026-07-31 16:41:41 +07 — **完了**: ユーザーから、日報のtimestampが実際の工程区切りを表していない（複数工程をまとめて末尾に一括記入していた）という指摘を受けた。`docs/management/project_rules.md` §15「作業記録と変更管理」を強調・具体化し、(1) 工程開始時に即時`date`取得＋追記、(2) 完了時に即時`date`取得＋所要時間付き追記、(3) 複数工程の一括後書きを明示的に禁止、を追加した。本Phase 4分は既にまとめて記入済みだったため、実在するGit commit時刻を境界として使い訂正した（timestampの事後捏造ではなく、実測記録からの再構成）。Phase 5以降はこの強化ルールを工程ごとに実施する。
+
+## Phase 5 — 説明性・誤分類分析
+
+- 2026-07-31 16:47:45 +07 — **開始**: `main`（`77266ce`、Phase 3〜4のfast-forward merge・push完了済み）から`agent/task10-phase5-explainability`を新規作成し、Phase 5（クラス別係数抽出、`descriptive_full_fit`の分離、OOF誤分類分析、error taxonomy文書化）へ着手する。範囲はexecution_plan.md Phase 5 Main tasks 4項目（係数抽出、誤分類CSV/JSON、taxonomy分析、評価用Fold modelと`descriptive_full_fit`の分離）。Extension（Phase 6）、最終PDF（Phase 7）、性能優劣の断定は対象外。

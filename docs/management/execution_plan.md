@@ -3,13 +3,14 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-07-31T15:00:37+07:00` |
+| Last verified | `2026-07-31T16:19:28+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
-| Branch | `agent/task10-phase2-data-generation` |
-| Current phase | Phase 2 `Completed`。Phase 3は `Ready` だが未着手 |
+| Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
+| Branch | `agent/task10-phase3-model-foundation` |
+| Current phase | Phase 2 `Completed`。Phase 3 `Completed`。Phase 4は `Ready` だが未着手 |
 | Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |
-| Remote note | Phase 2完了状態は作業branchへpush済み。最終handoff記録後にlocal/remote同期を再確認する |
+| Remote note | ドキュメント整理2 commits（`f230c33`、`d5130bb`）はpush済み。続くPhase 3実装5 commits（`9c08871`〜`1a44c81`）はlocalのみ、`origin/agent/task10-phase3-model-foundation`へ未push |
 
 Coreテーマ:
 
@@ -26,9 +27,10 @@ Coreテーマ:
 - 合成データ設計: `docs/architecture/synthetic_data_design.md`
 - データ品質契約: `docs/contracts/data_quality_contract.md`
 - 人間レビュー手順: `docs/contracts/human_review_guide.md`
+- Phase 3依存・Fold・model契約: `docs/contracts/phase3_model_contract.md`
 - 実行履歴: `docs/management/daily_report_20260731.md`
 
-Phase 3以降の詳細仕様書は現時点で確認できないため正本として扱わず、必要になったPhaseのPlanned成果物とする。古いbranch、HEAD、進捗値は本書へ履歴として蓄積せず、冒頭のcurrent snapshotだけを更新する。履歴の正本はGitと日報である。
+Phase 4以降の詳細仕様書は現時点で確認できないため正本として扱わず、必要になったPhaseのPlanned成果物とする。古いbranch、HEAD、進捗値は本書へ履歴として蓄積せず、冒頭のcurrent snapshotだけを更新する。履歴の正本はGitと日報である。
 
 ## 2. 全体方針
 
@@ -247,13 +249,14 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 **Status（現在の状態／Expected vs Actual）**
 
 - Expected: `Planned`
-- Actual: `In progress`
+- Actual: `Completed`
 - 完了: scikit-learn `1.9.0`を`pyproject.toml`の`[project.dependencies]`（Core）へ追加し、Python 3.14.4でresolve/lock/import/最小`TfidfVectorizer→LinearSVC`・`LogisticRegression` Pipeline fitを検証済み（commit `9c08871`）。
 - 完了: `src/mail_classification/evaluation/full_dataset.py`でFullデータhash契約の動的Fail-fast検証（`verify_full_dataset_hash`/`load_verified_full_dataset`）を実装。契約値は`docs/reviews/full_review_decision.json`の`full_data_hash`を実行時参照し、コードへ literal 複製しない。実データ（800件、hash `53c6f8949a2c3c2c75351122e31dff6b43ca6ff8a4d8326947d387b75b9a0bbc`）での一致読込と1byte改変時の`ValueError`raiseを実地検証済み。
 - 完了: `src/mail_classification/evaluation/splits.py`で`template_group`監査（`audit_template_groups`）、splitter推奨（`recommend_splitter_name`）、共通5-fold生成（`build_common_folds`）、JSON書き出し（`write_fold_artifact`）を実装。実データ800件は24 groups全て単一labelに属し（spanning 0件）group構造が実在するため`StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)`を採用（`task10_architecture.md`指定パラメータと一致）。`outputs/folds/common_folds.json`（hash `72a62dbffd23c38358744fb2a024a35a14b76747e264fc0abf7ce32c7f7e54c8`、生成物のため`.gitignore`管理・Git非追跡）へ書き出し済み。
 - 既知の限界（Phase 4へ引継ぎ）: labelごとの template group数（6）がn_splits（5）で割り切れないため、各labelにつき必ず1 foldが2 group分（66件）を受け取り、他4 foldsは1 group分（33/34件）となる。`StratifiedGroupKFold`はこの負担をlabelごとに異なるfoldへ分散させ、fold単位validation件数は134〜167件（理想160件に対し約±20%）。データ形状とn_splits設定の数学的必然であり実装不具合ではないが、macro-F1解釈時に留意する。
 - 完了: `src/mail_classification/models/factory.py`に`build_core_pipeline(model_name, *, tfidf_params, model_params)`（`TfidfVectorizer`＋`LinearSVC`/`LogisticRegression`の未fit Pipeline factory）を実装。未知の`model_name`は`ValueError`。TF-IDFはPipeline内でのみfitされ、`.named_steps["tfidf"].transform()`を事前に呼ぶと`NotFittedError`になることをtestで確認。
 - 完了: Coreアブレーション条件D0〜D2を承認・確定（詳細は本節末尾「Core条件（D0〜D2）承認記録」）。承認過程で、初回提案のD2がD1のbigram設定を引き継いだままで前処理変更と同時に発生する主要因交絡（project_rules.md §8違反）を検出し、D2のTF-IDFをD0基準のunigramへ戻す修正（案A）を経て確定した。`src/mail_classification/models/conditions.py`に`CORE_CONDITIONS`（D0/D1/D2の`preprocessing_config`＋`tfidf_params`）、`CORE_MODEL_PARAMS`（`C=1.0`固定）、`apply_condition_preprocessing`、`build_condition_pipeline`を実装し、3条件×2モデル＝6通り全てのsmoke fit/predictをtestで確認。
+- 完了: Phase 3 dependency/Fold/model契約文書`docs/contracts/phase3_model_contract.md`を作成し、上記全項目を正本として集約した。
 - 既存の`src/mail_classification/schemas/folds.py`はschema/検証契約のみ。
 
 **Prerequisites（前提条件）**
@@ -278,7 +281,7 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 - Completed: model-independent common Fold artifact at `outputs/folds/common_folds.json`（`fold_artifact_hash`は各experiment run生成時にmanifestへ記録予定、Phase 4で対応）
 - Completed: `src/mail_classification/models/factory.py`（`build_core_pipeline`）
 - Completed: `src/mail_classification/models/conditions.py`（`CORE_CONDITIONS`、`CORE_MODEL_PARAMS`、`apply_condition_preprocessing`、`build_condition_pipeline`）
-- Planned: Phase 3 dependency/Fold/model contract document
+- Completed: `docs/contracts/phase3_model_contract.md`
 
 **Validation（検証方法）**
 

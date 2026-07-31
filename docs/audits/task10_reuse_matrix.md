@@ -9,7 +9,7 @@
 
 Aは「課題9で使われた」だけでは付与しない。移植時にpath、画像解決方式、Chrome検出等を変更したtask10派生版は、動作確認済みでも定義上Bとする。元課題9版も課題10で変更が必要なためB、source registryや非破壊build等の設計思想はC（Reference only）として区別する。
 
-表中の課題9相対パスはすべて実在するローカルコピー`../task9/`を基準とし、課題6〜8はそれぞれ`../task6/`〜`../task8/`、Rabiloo資料は`../docs/`を基準とする。
+表中の課題9相対パスはすべて実在するローカルコピー`../../task9/`を基準とし、課題6〜8はそれぞれ`../../task6/`〜`../../task8/`、Rabiloo資料は`../../docs/`を基準とする。
 
 ## マトリクス
 
@@ -32,11 +32,11 @@ Aは「課題9で使われた」だけでは付与しない。移植時にpath�
 | D 2×2 ablation設計 | 9 | `scripts/extra/run_exp_d_ablation.py` | code/CSV/report | B | config/experiment matrix | cleaning×feature/tokenization条件へ一般化 | 要因の交互作用 | condition matrix test |
 | nested threshold設計 | 9 | `run_exp_c_threshold.py` | code/CSV | C | 将来Extension | Coreの主目的ではない。test閾値調整禁止の参考 | complexity | Core後のみ |
 | Core/Extension分離の設計思想 | 9 | `scripts/core`, `scripts/extra`, output dirs | code/tree | C | architecture/rules | 原則を参照し、task10のgate・設定・出力規約として新規適用 | 境界逸脱 | CLI guard |
-| 課題9 Markdown→HTML builder | 9 | `../task9/src/reporting/report_builder.py` | code/test/PDF | B | `tools/pdf_renderer/` | report名、root、title、base URIのtask10対応が必要 | Markdown pattern依存 | builder fixture |
+| 課題9 Markdown→HTML builder | 9 | `../../task9/src/reporting/report_builder.py` | code/test/PDF | B | `tools/pdf_renderer/` | report名、root、title、base URIのtask10対応が必要 | Markdown pattern依存 | builder fixture |
 | Markdown→HTML builder（task10派生版） | 9→10 | `tools/pdf_renderer/reporting/report_builder.py` | code/run/git history | B | 現配置維持 | path/title/base URIを改修済み。task10 report fixtureとlayout統合検証は継続必要 | Markdown pattern依存 | `verify_pdf.py` |
-| 課題9 Chrome PDF renderer | 9 | `../task9/src/reporting/pdf_renderer.py` | code/test/PDF | B | `tools/pdf_renderer/` | 旧HTTP server、固定binary、root制約の変更が必要 | socket/host依存 | PDF smoke |
+| 課題9 Chrome PDF renderer | 9 | `../../task9/src/reporting/pdf_renderer.py` | code/test/PDF | B | `tools/pdf_renderer/` | 旧HTTP server、固定binary、root制約の変更が必要 | socket/host依存 | PDF smoke |
 | Chrome PDF renderer（task10派生版） | 9→10 | `tools/pdf_renderer/reporting/pdf_renderer.py` | code/run/git history | B | 現配置維持 | Chrome自動検出、file URI、exit code確認へ改修済み。host別検証は継続必要 | Chrome/host依存 | PDF smoke |
-| source registry・非破壊build・opt-in repairの設計思想 | 9 | `../task9/src/reporting/` | code/test/report | C | architecture/rules | 設計原則を参照。task10コードは派生実装として個別評価 | heuristic/環境依存 | policy + integration |
+| source registry・非破壊build・opt-in repairの設計思想 | 9 | `../../task9/src/reporting/` | code/test/report | C | architecture/rules | 設計原則を参照。task10コードは派生実装として個別評価 | heuristic/環境依存 | policy + integration |
 | layout checker | 9→10 | `tools/pdf_renderer/reporting/layout_checker.py` | code/task9 tests | B | 現配置維持 | task10 report命名・path注入、heuristic留保、テスト移植 | false positive/negative | detector + E2E |
 | safe layout pipeline | 9→10 | `tools/pdf_renderer/reporting/layout_pipeline.py` | code/task9 tests | B | 現配置維持 | configs作成はreport段階、root/path汎用化済みだがtask10統合未検証 | cleanup範囲、Linux lock | opt-in/atomic/manual preservation |
 | task9 CSS | 9→10 | `tools/pdf_renderer/assets/styles/report.css` | code/PDF | B | 現配置維持 | 汎用化済みだが課題10本文で視覚確認が必要 | report固有page breaks | fixture visual |

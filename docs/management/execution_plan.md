@@ -8,7 +8,7 @@
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Branch | `agent/task10-phase2-data-generation` |
 | Current phase | Phase 2 `Completed`。Phase 3は `Ready` だが未着手 |
-| Status sources | 実在するGit履歴、`docs/daily_report_20260731.md`、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |
+| Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |
 | Remote note | Phase 2完了状態は作業branchへpush済み。最終handoff記録後にlocal/remote同期を再確認する |
 
 Coreテーマ:
@@ -19,14 +19,14 @@ Coreテーマ:
 
 本書はPhaseの目的、依存関係、主要作業、成果物、完了条件、移行Gateを管理する。詳細仕様は複製せず、次の実在する正本を参照する。
 
-- プロジェクト規約: `docs/project_rules.md`
-- Architecture: `docs/task10_architecture.md`
-- 再利用判断: `docs/task10_reuse_matrix.md`
-- 前処理契約: `docs/preprocessing_contract.md`
-- 合成データ設計: `docs/synthetic_data_design.md`
-- データ品質契約: `docs/data_quality_contract.md`
-- 人間レビュー手順: `docs/human_review_guide.md`
-- 実行履歴: `docs/daily_report_20260731.md`
+- プロジェクト規約: `docs/management/project_rules.md`
+- Architecture: `docs/architecture/task10_architecture.md`
+- 再利用判断: `docs/audits/task10_reuse_matrix.md`
+- 前処理契約: `docs/contracts/preprocessing_contract.md`
+- 合成データ設計: `docs/architecture/synthetic_data_design.md`
+- データ品質契約: `docs/contracts/data_quality_contract.md`
+- 人間レビュー手順: `docs/contracts/human_review_guide.md`
+- 実行履歴: `docs/management/daily_report_20260731.md`
 
 Phase 3以降の詳細仕様書は現時点で確認できないため正本として扱わず、必要になったPhaseのPlanned成果物とする。古いbranch、HEAD、進捗値は本書へ履歴として蓄積せず、冒頭のcurrent snapshotだけを更新する。履歴の正本はGitと日報である。
 
@@ -55,7 +55,7 @@ Phase 3以降の詳細仕様書は現時点で確認できないため正本と�
 
 - Expected: `Completed`
 - Actual: `Completed`
-- Evidence: commits `db7b869`, `36a38f9`; `docs/prior_artifacts_inventory.md`, `docs/task6_to_task9_audit.md`, `docs/task10_reuse_matrix.md`, `docs/task10_architecture.md`, `docs/project_rules.md`, `AGENTS.md`
+- Evidence: commits `db7b869`, `36a38f9`; `docs/audits/prior_artifacts_inventory.md`, `docs/audits/task6_to_task9_audit.md`, `docs/audits/task10_reuse_matrix.md`, `docs/architecture/task10_architecture.md`, `docs/management/project_rules.md`, `AGENTS.md`
 
 **Prerequisites（前提条件）**
 
@@ -124,7 +124,7 @@ raw data、run manifest、Fold artifactと、非破壊・決定的な英語3層�
 - `pyproject.toml`, `uv.lock`
 - `src/mail_classification/schemas/`
 - `src/mail_classification/preprocessing/`
-- `docs/schemas/`, `docs/preprocessing_contract.md`
+- `docs/schemas/`, `docs/contracts/preprocessing_contract.md`
 - `tests/test_preprocessing.py`, `tests/test_schemas.py`, `tests/test_config.py`, `tests/test_import_safety.py`
 
 **Validation（検証方法）**
@@ -182,7 +182,7 @@ raw data、run manifest、Fold artifactと、非破壊・決定的な英語3層�
 **Prerequisites（前提条件）**
 
 - Phase 1固定済み。
-- `docs/synthetic_data_design.md`, `docs/data_quality_contract.md`, `docs/human_review_guide.md`の実在と整合。
+- `docs/architecture/synthetic_data_design.md`, `docs/contracts/data_quality_contract.md`, `docs/contracts/human_review_guide.md`の実在と整合。
 
 **Main tasks（主な作業）**
 
@@ -263,7 +263,7 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 - 一度だけ共通5-fold assignmentを生成し、全条件・全モデル用artifactとして保存する。
 - TF-IDFをPipeline内に置き、LinearSVC／Logistic Regression factoryと最小smoke fitを実装する。
 - Coreアブレーション条件はPhase 2のデータ特性を確認後、Phase 3開始時に一主要因ずつの比較となるよう承認・確定する。D0〜D2等の名称と内容は、承認前には正式仕様として扱わない。
-- Fold保存形式の文書差異を解消する。`docs/project_rules.md`は`folds.csv`、Phase 1 schema文書はJSON preferredのため、正本形式と必要な派生形式を実装前に決定する。
+- Fold保存形式の文書差異を解消する。`docs/management/project_rules.md`は`folds.csv`、Phase 1 schema文書はJSON preferredのため、正本形式と必要な派生形式を実装前に決定する。
 
 **Main outputs（主な成果物）**
 

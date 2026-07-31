@@ -5,7 +5,7 @@
 - 監査日: 2026-07-31（Asia/Bangkok）
 - 課題10リポジトリ: `task10`
 - 課題10ブランチ: `agent/pdf-renderer-port`
-- 課題9ローカルリポジトリ: `../task9`
+- 課題9ローカルリポジトリ: `../../task9`
 - 課題9 remote: `git@github.com:YujiSK/nlp-preprocessing-eval.git`
 - 課題9監査コミット: `969fdb01ae9ac63239327ca122918f791631877b`
 - 課題9ブランチ: `main`（`origin/main`と一致）
@@ -19,9 +19,9 @@
 
 | 種別 | 所在 | 確認内容 |
 |---|---|---|
-| コード | `../task6/text_preprocessing.py` | NLTK/spaCyのtokenize、lowercase、stopword、stemming、lemmatization比較 |
-| コード | `../task6/text_preprocessing_extension.py` | NLTK bigram/trigram、BERT WordPieceの既知語・未知語分割デモ |
-| レポート | `../task6/課題６：英語テキストの前処理.pdf` | 英語前処理、否定語、n-gram、Subword、Preprocessing Skewの説明 |
+| コード | `../../task6/text_preprocessing.py` | NLTK/spaCyのtokenize、lowercase、stopword、stemming、lemmatization比較 |
+| コード | `../../task6/text_preprocessing_extension.py` | NLTK bigram/trigram、BERT WordPieceの既知語・未知語分割デモ |
+| レポート | `../../task6/課題６：英語テキストの前処理.pdf` | 英語前処理、否定語、n-gram、Subword、Preprocessing Skewの説明 |
 
 実装上の注意:
 
@@ -34,9 +34,9 @@
 
 | 種別 | 所在 | 確認内容 |
 |---|---|---|
-| コード | `../task7/benchmark_ja_nlp.py` | MeCab/IPAdic・UniDic・NEologd、Sudachi A/B/C、Janome標準/ユーザー辞書の比較と100回平均 |
-| コード | `../task7/benchmark_ja_normalization.py` | Raw/NFKC/NFKC+neologdn、Sudachi Mode C、文字数・トークン数比較 |
-| レポート | `../task7/課題７：日本語テキストの前処理.pdf` | 正規化、辞書、分割モード、原形/正規化形、品詞等の考察 |
+| コード | `../../task7/benchmark_ja_nlp.py` | MeCab/IPAdic・UniDic・NEologd、Sudachi A/B/C、Janome標準/ユーザー辞書の比較と100回平均 |
+| コード | `../../task7/benchmark_ja_normalization.py` | Raw/NFKC/NFKC+neologdn、Sudachi Mode C、文字数・トークン数比較 |
+| レポート | `../../task7/課題７：日本語テキストの前処理.pdf` | 正規化、辞書、分割モード、原形/正規化形、品詞等の考察 |
 
 実装上の注意:
 
@@ -49,7 +49,7 @@
 
 | 種別 | 所在 | 確認内容 |
 |---|---|---|
-| レポート | `../task8/課題８：AI・NLP技術.pdf` | BoW、TF-IDF、Embedding、Transformer、BERT、Hugging Face、LLM、メール分類案 |
+| レポート | `../../task8/課題８：AI・NLP技術.pdf` | BoW、TF-IDF、Embedding、Transformer、BERT、Hugging Face、LLM、メール分類案 |
 
 課題8には対応するPython、テスト、設定、実行結果を確認できなかった。したがってTF-IDF＋LinearSVC/Logistic RegressionやBERT比較は「設計知見」であり、「既存実装」ではない。
 
@@ -57,22 +57,22 @@
 
 | 種別 | 所在 | 確認内容 |
 |---|---|---|
-| 説明 | `../task9/README.md` | 構成、実行方法、Core/Extension、PDF、既知の制約 |
-| 計画 | `../task9/docs/execution_plan.md` | 評価・リーク・出力・再現性計画と実施チェック |
-| 共通コード | `../task9/src/utils.py` | 共通Fold、時間、Long保存、出力先、環境情報 |
-| 共通コード | `../task9/src/experiments/evaluation.py` | Fold評価、集約、Before/Afterペア差 |
-| 共通コード | `../task9/src/experiments/models.py` | 4モデルファクトリ |
-| 共通コード | `../task9/src/experiments/explainability.py` | 係数と木重要度 |
-| 共通コード | `../task9/src/experiments/preprocessing.py` | livedoor読込、フッター除去、完全重複、形態素解析器 |
-| CLI | `../task9/scripts/core/` | 実験A〜D |
-| Extension | `../task9/scripts/extra/` | PI、coverage、nested threshold、D 2×2、構造監査、図・レポート補助 |
-| PDF基盤 | `../task9/src/reporting/` | Markdown→HTML→PDF、source registry、検査、修復 |
-| 設定 | `../task9/configs/layout_overrides.yml` | manual/generated・main/extra分離 |
-| テスト | `../task9/tests/` | 共通基盤とPDF検査・修復 |
-| 実行結果 | `../task9/outputs/exp_*` | Fold Long、集約、ペア差、説明性、時間、図、環境 |
-| レポート | `../task9/outputs/SUMMARY_REPORT*.md/.pdf` | CoreおよびExtension報告 |
-| PDF監査結果 | `../task9/outputs/reports/` | レイアウトJSON/Markdown、設計監査 |
-| キャッシュ | `../task9/data_cache/` | livedoor/OpenMLのローカルキャッシュ。Git非管理 |
+| 説明 | `../../task9/README.md` | 構成、実行方法、Core/Extension、PDF、既知の制約 |
+| 計画 | `../../task9/docs/execution_plan.md` | 評価・リーク・出力・再現性計画と実施チェック |
+| 共通コード | `../../task9/src/utils.py` | 共通Fold、時間、Long保存、出力先、環境情報 |
+| 共通コード | `../../task9/src/experiments/evaluation.py` | Fold評価、集約、Before/Afterペア差 |
+| 共通コード | `../../task9/src/experiments/models.py` | 4モデルファクトリ |
+| 共通コード | `../../task9/src/experiments/explainability.py` | 係数と木重要度 |
+| 共通コード | `../../task9/src/experiments/preprocessing.py` | livedoor読込、フッター除去、完全重複、形態素解析器 |
+| CLI | `../../task9/scripts/core/` | 実験A〜D |
+| Extension | `../../task9/scripts/extra/` | PI、coverage、nested threshold、D 2×2、構造監査、図・レポート補助 |
+| PDF基盤 | `../../task9/src/reporting/` | Markdown→HTML→PDF、source registry、検査、修復 |
+| 設定 | `../../task9/configs/layout_overrides.yml` | manual/generated・main/extra分離 |
+| テスト | `../../task9/tests/` | 共通基盤とPDF検査・修復 |
+| 実行結果 | `../../task9/outputs/exp_*` | Fold Long、集約、ペア差、説明性、時間、図、環境 |
+| レポート | `../../task9/outputs/SUMMARY_REPORT*.md/.pdf` | CoreおよびExtension報告 |
+| PDF監査結果 | `../../task9/outputs/reports/` | レイアウトJSON/Markdown、設計監査 |
+| キャッシュ | `../../task9/data_cache/` | livedoor/OpenMLのローカルキャッシュ。Git非管理 |
 
 課題9のテスト結果:
 
@@ -85,15 +85,15 @@
 成果物世代の注意:
 
 - 現在の`outputs/reports/layout_summary_report*.json`とPDFは本編20ページ・発展版30ページ。
-- `docs/execution_plan.md`の完了記録には18ページ・34ページとあり、過去世代の記述が残っている。
+- `../../task9/docs/execution_plan.md`の完了記録には18ページ・34ページとあり、過去世代の記述が残っている。
 - layout JSON内のPDF pathは生成ホストの絶対パス。現在ファイルは存在するが、課題10ではrun manifest/hashによる世代一致と相対pathを必須にする。
 
 ### 2.5 Rabilooオンボーディング
 
 | 種別 | 所在 | 確認内容 |
 |---|---|---|
-| 原文 | `../docs/text-preprocessing-en-ja.md` | 英日テキスト前処理の原則と3日演習 |
-| 日本語版 | `../docs/text-preprocessing-en-ja.ja.md` | 原文の日本語訳 |
+| 原文 | `../../docs/text-preprocessing-en-ja.md` | 英日テキスト前処理の原則と3日演習 |
+| 日本語版 | `../../docs/text-preprocessing-en-ja.ja.md` | 原文の日本語訳 |
 
 Cleaning／Normalization／Segmentation、独立ON/OFF、`Preprocessor`＋registry、raw保持、処理統計、30件以上のテスト、exact/near duplicate、MinHashLSH、language detection、古典/BERT比較、解析器再利用、Notebook/実行コード共通importを確認した。ただし後半の`preprocess/`構成やMinHash等は「演習の要求仕様」であり、実装コードは資料内に存在しない。
 

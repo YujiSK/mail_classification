@@ -6,7 +6,7 @@
 
 1. 大学の課題10要件
 2. 本プロジェクトの実験計画
-3. `docs/project_rules.md`
+3. `docs/management/project_rules.md`
 4. 設定ファイル
 5. 個別スクリプト
 
@@ -14,7 +14,7 @@
 
 ## 2. ディレクトリ配置
 
-最終責務は`docs/task10_architecture.md`の推奨構成に従う。
+最終責務は`docs/architecture/task10_architecture.md`の推奨構成に従う。
 
 - 原本・キャッシュ: `data/raw/`
 - 再生成可能な派生データ: `data/derived/`
@@ -40,7 +40,7 @@
 - 実験固有orchestrationと共通ロジックを分離し、God Scriptを作らない。
 - 絶対パスをハードコードしない。root解決は単一の`paths.py`または明示引数に統一する。
 - 設定値をコード・複数YAMLへ重複記述しない。設定schemaと既定値の正本を一つにする。
-- 既存資産を再実装する前に`docs/task10_reuse_matrix.md`を確認する。
+- 既存資産を再実装する前に`docs/audits/task10_reuse_matrix.md`を確認する。
 
 ## 4. データ管理
 
@@ -193,7 +193,7 @@
 
 ## 15. 作業記録と変更管理
 
-- `docs/daily_report_20260731.md`および後続日報へ工程の開始・完了時刻と結果を記録する。
+- `docs/management/daily_report_20260731.md`および後続日報へ工程の開始・完了時刻と結果を記録する。
 - 不明点は推測実装せず、TODOまたは未確認事項として記録する。
 - 既存結果を監査中に削除・上書きしない。
 - テスト失敗を隠さず、環境要因とコード要因を分けて記録する。

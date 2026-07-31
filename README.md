@@ -14,6 +14,6 @@ Current status:
 - Phase 3: ready but not started.
 - Model training, cross-validation, and report writing have not started.
 
-Project rules are defined in `docs/project_rules.md`. Generated raw data and
+Project rules are defined in `docs/management/project_rules.md`. Generated raw data and
 quality outputs are reproducible from tracked configuration and templates and
 are intentionally excluded from Git.

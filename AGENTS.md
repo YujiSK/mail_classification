@@ -1,7 +1,7 @@
 # AI editor rules for Task 10
 
-- 開発開始前に `docs/project_rules.md` を読むこと。同ファイルを本プロジェクト規約の正本とする。
-- 既存資産を再実装する前に `docs/task10_reuse_matrix.md` を確認する。
+- 開発開始前に `docs/management/project_rules.md` を読むこと。同ファイルを本プロジェクト規約の正本とする。
+- 既存資産を再実装する前に `docs/audits/task10_reuse_matrix.md` を確認する。
 - `Pipeline` 外で学習型前処理をfitしない。
 - `raw_text`を上書きしない。
 - 全条件・全モデルで同一の評価Foldを使用する。

@@ -209,6 +209,7 @@ outputs/data_quality/
 outputs/manifests/
 outputs/folds/
 outputs/runs/
+outputs/extensions/
 
 # Ruff stuff:
 .ruff_cache/

@@ -3,17 +3,19 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-07-31T17:04:49+07:00` |
+| Last verified | `2026-07-31T17:23:58+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
 | Phase 4 implementation | `9a6cf25`（Core実験runner、実データ実行結果`outputs/runs/phase4-core-seed42/`はGit非追跡・再現可能） |
 | Phase 3〜4を`main`へ統合 | `77266ce`（`agent/task10-phase3-model-foundation`から`main`へfast-forward merge、push済み） |
 | Phase 5 implementation | `b2f76de`（説明性・誤分類分析、実データ実行結果`outputs/runs/phase5-explain-seed42/`はGit非追跡・再現可能） |
-| Branch | `agent/task10-phase5-explainability`（`main`＝`77266ce`から新規作成） |
-| Current phase | Phase 2〜4 `Completed`（`main`へ統合・push済み）。Phase 5 `Completed`（本branch、pushはこの後実施） |
+| Phase 5を`main`へ統合 | `c1e8d10`（`agent/task10-phase5-explainability`から`main`へfast-forward merge、push済み） |
+| Phase 6 implementation | commit未確定（本コミット作成時に追記予定）。実データ実行結果は`outputs/extensions/phase6-minhash-seed42/`（Git非追跡・再現可能） |
+| Branch | `agent/task10-phase6-extension`（`main`＝`c1e8d10`から新規作成） |
+| Current phase | Phase 2〜5 `Completed`（`main`へ統合・push済み）。Phase 6 `Completed`（MinHashLSHのみ承認・実施、BERT非実施、本branch、pushはこの後実施） |
 | Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |
-| Remote note | `main`は`77266ce`まで同期済み。`agent/task10-phase5-explainability`はPhase 5実装commit後にpush予定 |
+| Remote note | `main`は`c1e8d10`まで同期済み。`agent/task10-phase6-extension`はPhase 6実装commit後にpush予定 |
 
 Coreテーマ:
 
@@ -444,34 +446,36 @@ Coreで答えられない明確な問いだけを、Core成果物を変更せず
 **Status（現在の状態／Expected vs Actual）**
 
 - Expected: `Optional`
-- Actual: `Optional`
-- MinHashLSH、BERT、language detection等は未実装・未選択。
+- Actual: `Completed`
+- 承認済み（2026-07-31、User (Yuji Sunagawa)）: MinHashLSHのみを実施。BERT比較は非実施（`torch`のuv解決が60秒でtimeoutし大容量依存・Python 3.14互換未確認という実測リスクを提示した上でユーザーが選択）。実施理由: Rabiloo資料と`docs/contracts/data_quality_contract.md`が明示的にCore範囲外としたMinHashLSH近接重複センシティビティを検証する。計算予算: 新規サードパーティ依存なし（stdlib `hashlib`のみ）、Full 800件規模。停止条件: 依存導入が必要になった場合、または60秒程度で完了しない重い処理が必要になった場合は実装を止めて報告する。
+- 完了: `src/mail_classification/extensions/`（Core `quality`/`evaluation`/`models`とは独立、Coreから一切importされない別package）へ`minhash.py`（`word_shingles`、`minhash_signature`、`lsh_candidate_pairs`、`exact_jaccard`、`find_near_duplicates`、`summarize_near_duplicates`）、`runner.py`（`run_and_write_minhash_extension`：出力先は`outputs/extensions/`、Core namespace `outputs/runs/`・`outputs/data_quality/`・`outputs/folds/`には一切書き込まない）を実装。サードパーティ依存追加なし（`uv.lock`不変）。
+- 実データ（Full 800件）で実行し、`outputs/extensions/phase6-minhash-seed42/`を生成。実測結果: 候補pair 2054件、全てCore（exact/normalized重複0件）が未検出のpair（`additional_beyond_core_exact_normalized: 2054`）。ただし**cross-label pairは0件、different-template-group pairも0件**——2054件は全てsame-label・same-template_groupの組であり、Phase 2が意図的に共有するcomponent pool（greeting/closing/signature/subject等）由来の近接重複と整合する。ラベル境界を跨ぐ近接重複は確認されず、Core結果へのリーク疑義は本Extensionの範囲では見つからなかった。
 
 **Prerequisites（前提条件）**
 
 - Phase 5完了。
-- 実施理由、計算予算、比較条件、停止条件が事前承認される。
+- 実施理由、計算予算、比較条件、停止条件が事前承認される。→ 上記Status参照、満たされた。
 
 **Main tasks（主な作業）**
 
-- Optional: MinHashLSHによるnear-duplicate感度分析。
-- Optional: BERT系とCore TF-IDF線形モデルを同じdata/Fold/metricで比較。
-- Coreとは別config、CLI、run ID、output directoryを使用する。
+- 完了: MinHashLSHによるnear-duplicate感度分析。
+- 非実施（承認済み）: BERT系とCore TF-IDF線形モデルの比較。
+- 完了: Coreとは別config（新規config不要）、別CLI（呼び出し関数のみ、Core CLIと共有せず）、別run ID（`phase6-minhash-seed42`）、別output directory（`outputs/extensions/`）を使用した。
 
 **Main outputs（主な成果物）**
 
-- Planned only if approved: Extension config/code/tests/artifacts/manifest。
-- Core成果物への上書きは行わない。
+- Completed: `outputs/extensions/phase6-minhash-seed42/near_duplicates.csv`、`summary.json`、`manifest.json`
+- 確認済み: Core成果物への上書きなし（`outputs/runs/`・`outputs/data_quality/`・`outputs/folds/`は本Extension実行前後で無変更、testでも検証済み）。
 
 **Validation（検証方法）**
 
-- 同一data/Fold/metric、依存version、resource、時間、失敗状態を保存。
-- CoreとExtensionのpath/hashが混在していないことを検査。
+- 同一data（`data_hash`）、依存version（新規third-party依存0件）、時間、失敗状態をmanifestへ保存。
+- CoreとExtensionのpath/hashが混在していないことを検査（`fold_artifact_path`/`hash`は`null`、出力先はCoreと重複しない別ディレクトリ）。
 
 **Completion criteria（完了条件）**
 
-- 選択したExtensionの問いに必要なartifactが揃い、Coreとの公平な比較が可能。
-- 未選択の場合は「実施しない」判断と理由を記録すればPhase 7へ進める。
+- 選択したExtensionの問いに必要なartifactが揃い、Coreとの公平な比較が可能。→ 満たされた（Coreの重複判定と同一データに対する感度比較として機能）。
+- 未選択の場合は「実施しない」判断と理由を記録すればPhase 7へ進める。→ 本Phaseでは実施を選択したため対象外。
 
 **Transition gate（次Phaseへの移行条件）**
 

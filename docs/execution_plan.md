@@ -3,12 +3,13 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-07-31T14:52:26+07:00` |
+| Last verified | `2026-07-31T14:57:38+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
+| Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Branch | `agent/task10-phase2-data-generation` |
-| Current phase | Phase 2C — Full実装済み・clean commit後の正式生成待ち（Phase 2全体は `In progress`） |
-| Status sources | 実在するGit履歴、`docs/daily_report_20260731.md`、機械可読のSmoke/Pilot manifest・品質artifact |
-| Remote note | Phase 2Bは`358c5c3`までlocal/remote同期済み。Phase 2C実装はworking tree |
+| Current phase | Phase 2 `Completed`。Phase 3は `Ready` だが未着手 |
+| Status sources | 実在するGit履歴、`docs/daily_report_20260731.md`、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |
+| Remote note | Phase 2C実装commit `e37ea0d`までlocal/remote同期済み。Full承認記録は最終状態commit待ち |
 
 Coreテーマ:
 
@@ -156,20 +157,27 @@ raw data、run manifest、Fold artifactと、非破壊・決定的な英語3層�
 
 **Status（現在の状態／Expected vs Actual）**
 
-- Expected: `In progress`
-- Actual: `In progress`
+- Expected: `Completed`
+- Actual: `Completed`
 - Preparation: `Completed`
 - Generator/quality implementation: `Completed` at local commit `a59d3a7`
 - Smoke/Pilot and automatic quality gate: `Completed`
 - Human Review Gate: `Approved` after source correction and regenerated review
-- Full implementation: `Completed` in working tree、126 testsと一時directory dry run成功
-- Full generation: 設定上enabled。実装commit/push後のclean HEADからのみ正式生成するため未実行
+- Full implementation: `Completed` at commit `e37ea0d`
+- Full generation and automatic QA: `Completed`
+- Full Human Spot Review: `Approved`
 - Actual Pilot manifest: `outputs/manifests/phase2-pilot-seed20260731.json`
   - `git_commit`: `397683ce891a67884d158ac240e8c929aad2f48f`
   - `git_dirty`: `true`（Human Review修正のcommit前に再生成）
   - data hash: `a7679feb78155dbd8ee50b43ff78200bcc3117060ea0811d31cc1a2a7cb98a94`
 - Actual Pilot summary: 96 records、4 classes各24、easy/medium/hard各32、24 groups、exact/normalized duplicates 0、leakage error 0/warning 0/info 10、automatic pass。自動生成summaryは設計上human review pending／Full不可を維持する。
 - Tracked review decision: `docs/reviews/pilot_review_decision.json`。60件全pass、info候補10種類を意図語として確認し、Pilot data/template/review CSV/leakage findings/output-side decisionのhashを固定。Phase 2C ready。
+- Actual Full manifest: `outputs/manifests/phase2-full-seed20260731.json`
+  - `git_commit`: `e37ea0de86876c2b93ef1d91cb5cf4b611661002`
+  - `git_dirty`: `false`
+  - data hash: `53c6f8949a2c3c2c75351122e31dff6b43ca6ff8a4d8326947d387b75b9a0bbc`
+- Actual Full summary: 800 records、4 classes各200、class内urgency各50、24 groups各33/34、class内difficulty各67/67/66、exact/normalized duplicates 0、leakage error 0/warning 0/info 10、automatic pass。
+- Tracked Full review decision: `docs/reviews/full_review_decision.json`。24 template groups各1件を含む24件全pass、info候補10種類を意図語として確認し、Full data/config/template/review/leakage/summary/manifest hashを固定。Phase 3 ready、未着手。
 
 **Prerequisites（前提条件）**
 
@@ -184,7 +192,8 @@ raw data、run manifest、Fold artifactと、非破壊・決定的な英語3層�
 - 完了: 追加Punch Listに基づき`tg005`、`tg018`、`tg021`を自然な文脈へ修正し、`tg023`へ別intentの罠を加えてHard根拠を強化。
 - 完了: 再抽出60件を全件確認。この60件にはinfo候補10種類の該当sampleを含み、全件pass。
 - 完了: Full 800件のclass 200、urgency 50、group 33/34、difficulty 67/67/66の決定的配分、Pilot承認hash Gate、Full QA、24 group spot reviewを実装。
-- 未完了: Phase 2C実装をcommit/push後、clean HEADからFullを2回生成し、spot reviewとhash固定を行う。
+- 完了: clean・remote同期済み`e37ea0d`からFullを2回生成し、data/summary/review/leakage artifactの完全一致を確認。
+- 完了: 24件spot reviewとinfo候補10種類を確認し、全件passとして機械可読な承認証拠へ固定。
 
 **Main outputs（主な成果物）**
 
@@ -195,7 +204,8 @@ raw data、run manifest、Fold artifactと、非破壊・決定的な英語3層�
 - Generated/ignored but verified: `data/raw/smoke_emails.jsonl`, `data/raw/pilot_emails.jsonl`
 - Generated/ignored but verified: `outputs/data_quality/`, `outputs/manifests/`
 - Generated/ignored review evidence: `outputs/data_quality/pilot_review_decision.json`
-- Planned after clean commit: `data/raw/full_emails.jsonl` and matching quality/manifest artifacts。
+- Generated/ignored but verified: `data/raw/full_emails.jsonl` and matching quality/manifest/review-decision artifacts。
+- Tracked Full approval evidence: `docs/reviews/full_review_decision.json`
 
 **Validation（検証方法）**
 
@@ -204,6 +214,9 @@ raw data、run manifest、Fold artifactと、非破壊・決定的な英語3層�
 - exact/normalized duplicate、label/template/header/signature/metadata/length監査。
 - `outputs/data_quality/pilot_review_samples.csv`全60件とinfo候補10種類を目視確認。
 - 一時directoryでFull 800件dry run: automatic pass、duplicate 0、error/warning 0、info 10、spot review 24 groups、Pilot approval hashをmanifestへ保存。
+- clean commit `e37ea0d`からFullを2回生成し、data、summary、review CSV、leakage findingsのSHA-256一致を確認。
+- Full manifestの`git_dirty: false`、commit/config/template/data/Pilot-approval hashを確認。
+- Full review CSV 24件は24 groups、全class/difficulty、長短、構造、否定、multi-intent、info候補10種類を覆い、24/24 pass。
 
 **Completion criteria（完了条件）**
 
@@ -517,10 +530,10 @@ Phase 2A Generator + Smoke/Pilot + Auto QA   [Completed]
 Phase 2B Human Review                        [Approved]
           |
           v
-Phase 2C Full Generation + Final Data QA     [Implementation complete; execution pending]
+Phase 2C Full Generation + Final Data QA     [Completed / Approved]
           |
           v
-Phase 3 Dependencies + Common Folds + Models [Planned]
+Phase 3 Dependencies + Common Folds + Models [Ready; not started]
           |
           v
 Phase 4 Core Ablation / Multiclass CV        [Planned]
@@ -545,8 +558,8 @@ Phase 7 Report / PDF / Finalization          [Planned]
 | --- | --- | --- | --- |
 | 0 | Completed | Existing: inventory, audit, reuse matrix, architecture, rules | 根拠付き監査と設計承認 |
 | 1 | Completed | Existing: `pyproject.toml`, `uv.lock`, schemas, preprocessing, contracts, tests | Phase 1 tests・lock・diff成功、固定commit公開 |
-| 2 | In progress | Existing: generator/quality code, config/templates, Smoke/Pilot, summaries/reports/manifests; Planned: reviewed Full | Human review完了＋Full品質・hash固定 |
-| 3 | Planned | Planned: sklearn lock、common Fold artifact、minimal LinearSVC/LR Pipelines | dependency/Fold/Pipeline検証成功 |
+| 2 | Completed | Existing: generator/quality code, config/templates, reviewed Smoke/Pilot/Full, summaries/reports/manifests and tracked approvals | Human review完了＋Full品質・hash固定 |
+| 3 | Ready | Planned: sklearn lock、common Fold artifact、minimal LinearSVC/LR Pipelines | dependency/Fold/Pipeline検証成功 |
 | 4 | Planned | Planned: Fold Long、summary、OOF、confusion、paired differences、timing/vocabulary | 全Core完走、OOF coverage完全 |
 | 5 | Planned | Planned: class/Fold coefficients、misclassification artifacts、error taxonomy | Coreの説明性・誤分類分析確定 |
 | 6 | Optional | Planned only if approved: MinHashLSH/BERT等の別run | 選択Extension完了または非実施判断 |
@@ -618,7 +631,6 @@ Phase 7 Report / PDF / Finalization          [Planned]
 
 ### 未確認事項
 
-- Full正式生成後の24件spot reviewとinfo候補10件の最終判断。
 - 大学課題10の要件原本。特にBERT比較の必須/任意、提出形式、評価指標の指定。
 - Phase 3のFold artifact正本形式。project rulesのCSV指定とPhase 1 schema文書のJSON preferredを整合させる必要がある。
 - scikit-learnのPython 3.14互換性と確定version。
@@ -627,8 +639,6 @@ Phase 7 Report / PDF / Finalization          [Planned]
 
 ### 直近アクション
 
-1. Phase 2C実装をcommit/pushし、local/remote同期とworking tree cleanを確認する。
-2. Fullを2回生成し、重複・内容リーク・balance・hash・manifest検査を再実行する。
-3. Full 24件spot sampleとinfo候補を確認する。
-4. Full hash・template group・承認証拠を固定してPhase 2完了を記録する。
-5. Phase 3開始時にdependency/Fold形式/Core条件の詳細計画を承認する。
+1. Full承認証拠とPhase 2完了記録をcommit/pushし、local/remote同期とworking tree cleanを確認する。
+2. Phase 3を開始する場合は、dependency/Fold形式/Core条件の詳細計画を先に承認する。
+3. Phase 3開始時にscikit-learnのPython 3.14互換性をlock・import・最小Pipelineで検証する。

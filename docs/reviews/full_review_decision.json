@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "phase": "2C",
+  "status": "approved",
+  "approved_at": "2026-07-31T14:56:13+07:00",
+  "reviewer": "Codex manual content review under user direction",
+  "review_basis": "All 24 deterministic Full spot-review rows were manually inspected. The sample covers every template group, all labels and difficulties, shortest and longest messages, negation, multi-intent text, headers, signatures, quoted replies, and every informational lexical candidate. Primary intent, difficulty, naturalness, and structural independence passed. The ten informational findings are legitimate intent vocabulary rather than non-intent shortcuts.",
+  "full_data_hash": "53c6f8949a2c3c2c75351122e31dff6b43ca6ff8a4d8326947d387b75b9a0bbc",
+  "config_hash": "dce45b61afad6bb65044b267c6d2848bd76c842d88a52548352cb0ae7d94e47e",
+  "template_definition_hash": "528ec48123097d0771aa94a7ed216297cdeaf193028c5a87c7bf61eafd48633c",
+  "generator_version": "1.0.0",
+  "reviewed_count": 24,
+  "passed_count": 24,
+  "revise_count": 0,
+  "reject_count": 0,
+  "leakage_info_candidates": 10,
+  "leakage_error_count": 0,
+  "leakage_warning_count": 0,
+  "automatic_quality_pass": true,
+  "review_csv_path": "outputs/data_quality/full_review_samples.csv",
+  "review_csv_pre_review_sha256": "2b7fa39a83f4d89fb9a17511e8bb455778f23df372f76394e902d9833bef3d09",
+  "review_csv_sha256": "10633dcdb3ba0d9f0799f68408a438970842e7d17b011dbdde1c446c59c103c1",
+  "review_csv_immutable_fields_sha256": "c402c2a7cd6caa681fec8ee55b15b09d87031d449d1e7bd435eb5e3800c38788",
+  "review_csv_immutable_hash_method": "SHA-256 of UTF-8 canonical JSON rows with sorted keys and compact separators, excluding review_status and review_comment",
+  "leakage_findings_path": "outputs/data_quality/full_leakage_findings.csv",
+  "leakage_findings_sha256": "f4bf2a17f78411f989d2a42fcab368143aa4eed53ee30bad36da924022e8cbcc",
+  "summary_path": "outputs/data_quality/full_summary.json",
+  "summary_sha256": "dd1b9fa290c34f35b9b33cd9d6b11a9f494b49f1553e2b5ddd6576231ddf14f1",
+  "manifest_path": "outputs/manifests/phase2-full-seed20260731.json",
+  "manifest_sha256": "098e6725ad584ce95a2ffb58e6e467ed1d5c50f02e2bfd63274777fb3faccd9a",
+  "git_commit": "e37ea0de86876c2b93ef1d91cb5cf4b611661002",
+  "git_dirty": false,
+  "ignored_decision_path": "outputs/data_quality/full_review_decision.json",
+  "ignored_decision_sha256": "cdfaf31d552d73470d40cfc2090a39b6feeed146e6acf68dbd6e8894799f8464",
+  "informational_candidate_decisions": [
+    {
+      "category": "class_specific_bigram",
+      "feature": "the statement",
+      "label": "billing",
+      "count": 35,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "address",
+      "label": "account_support",
+      "count": 41,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "amount",
+      "label": "billing",
+      "count": 34,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "application",
+      "label": "technical_issue",
+      "count": 34,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "cancellation",
+      "label": "billing",
+      "count": 41,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "card",
+      "label": "billing",
+      "count": 33,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "email",
+      "label": "account_support",
+      "count": 33,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "security",
+      "label": "account_support",
+      "count": 34,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "statement",
+      "label": "billing",
+      "count": 52,
+      "decision": "accepted_intent_vocabulary"
+    },
+    {
+      "category": "class_specific_token",
+      "feature": "verification",
+      "label": "account_support",
+      "count": 32,
+      "decision": "accepted_intent_vocabulary"
+    }
+  ],
+  "phase2_complete": true,
+  "phase3_ready": true,
+  "phase3_started": false
+}

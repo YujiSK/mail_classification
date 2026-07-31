@@ -3,15 +3,17 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-07-31T16:37:50+07:00` |
+| Last verified | `2026-07-31T17:01:47+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
 | Phase 4 implementation | `9a6cf25`（Core実験runner、実データ実行結果`outputs/runs/phase4-core-seed42/`はGit非追跡・再現可能） |
-| Branch | `agent/task10-phase3-model-foundation` |
-| Current phase | Phase 2 `Completed`。Phase 3 `Completed`。Phase 4 `Completed`。Phase 5は未着手 |
+| Phase 3〜4を`main`へ統合 | `77266ce`（`agent/task10-phase3-model-foundation`から`main`へfast-forward merge、push済み） |
+| Phase 5 implementation | commit未確定（本コミット作成時に追記予定）。実データ実行結果は`outputs/runs/phase5-explain-seed42/`（Git非追跡・再現可能） |
+| Branch | `agent/task10-phase5-explainability`（`main`＝`77266ce`から新規作成） |
+| Current phase | Phase 2〜4 `Completed`（`main`へ統合・push済み）。Phase 5 `Completed`（本branch、pushはこの後実施） |
 | Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |
-| Remote note | ドキュメント整理2 commits（`f230c33`、`d5130bb`）はpush済み。続くPhase 3〜4実装commits（`9c08871`以降）はlocalのみ、`origin/agent/task10-phase3-model-foundation`へ未push |
+| Remote note | `main`は`77266ce`まで同期済み。`agent/task10-phase5-explainability`はPhase 5実装commit後にpush予定 |
 
 Coreテーマ:
 
@@ -385,8 +387,13 @@ Coreの性能差をクラス別係数とOOF誤分類から説明し、合成temp
 **Status（現在の状態／Expected vs Actual）**
 
 - Expected: `Planned`
-- Actual: `Planned`
-- `coef_`抽出、誤分類artifact、error taxonomyは未作成。
+- Actual: `Completed`
+- 完了: `src/mail_classification/explain/`へ`linear.py`（`extract_fold_coefficients`：Fold再fit＋クラス別top positive/negative/absolute係数と語彙、`extract_descriptive_full_fit_coefficients`：全データfit専用の別関数・別出力、`audit_top_features_for_structural_artifacts`：header/URL/email語の再監査）、`errors.py`（`build_misclassification_rows`：OOF true≠pred行をdifficulty/template_group/構造flag/`multi_intent`・`secondary_intent`・`contains_negation`（いずれもPhase 2 generatorが実際に記録するmetadata）と結合し`primary_category`を付与）、`evidence.py`（`enrich_misclassifications_with_evidence`：Fold再fitでdecision scoreと寄与特徴を追加、true/predicted labelはOOFの実測値を再利用し再計算しない）、`runner.py`（`run_and_write_explainability`）を実装した。
+- 実データ（Full 800件、Phase 4の`outputs/runs/phase4-core-seed42/predictions_oof.csv`）で6セル分の係数抽出・誤分類分析を実行し、`outputs/runs/phase5-explain-seed42/`へ`fold_coefficients.csv`、`descriptive_full_fit_coefficients.csv`、`structural_artifact_audit.csv`、`misclassifications.csv`（decision score・寄与特徴付き、1883件）、`error_category_summary.csv`、`manifest.json`を生成した。
+- 実測所見（仮説として記録、断定しない）:
+  - 構造artifact再監査: `subject`/`from`/`sent`/`cc`/`bcc`/`url`/`wrote`はD0〜D2いずれのtop featureにも出現しなかった。`email`のみ全条件（D0/D1/D2）のtop_absolute featureに出現したが、D0（header/URL/email非除去）でも同様に出現するため、`<EMAIL>`置換由来の構造artifactというより、合成本文中の自然な語彙（"email"という単語自体が意図語として使われている）である可能性が高いと仮説的に判断する。header/URL由来の明確なリークは確認されなかった。
+  - error taxonomy集計（6セル合計）: `structural_content`（header/signature/quoted-reply存在）が最多だが、これは合成データ全体でも該当record比率が高いため（Phase 2実測: header/signature/quoted replyは半数前後の記録に存在）、誤分類での比率が母集団比率より高いかは未検証であり、本Phaseでは「頻度が高い」以上の因果主張はしない。次点は`multi_intent`（62〜81件/セル）、`ambiguous_difficulty`（31〜41件/セル）。
+  - decision score・寄与特徴の実例確認: 一部の誤分類で、正解class寄りの語（例: "cancellation"、"refund"）が誤答classの寄与特徴（例: "want"、"my"）より高いTF-IDF係数を持つにもかかわらず誤分類となる例を確認した。寄与特徴に一般的な機能語（"the"、"is"、"an"、"you"）が頻出することも確認した。これは`build_core_pipeline`の`TfidfVectorizer`が`stop_words`を設定していないため（Phase 3で承認されたD0〜D2はこの設定を変更していない）であり、将来的なablation候補として記録するが、本Phaseでは変更しない。
 
 **Prerequisites（前提条件）**
 
@@ -394,27 +401,27 @@ Coreの性能差をクラス別係数とOOF誤分類から説明し、合成temp
 
 **Main tasks（主な作業）**
 
-- 各Fold・各クラスで正係数、負係数、絶対値上位と対応語彙を抽出。
-- OOF誤分類をtrue/pred、decision score、difficulty、template group、構造flag、寄与特徴で出力。
-- 誤分類を曖昧性、複数意図、template、前処理、class境界等で分析する。
-- 評価用Fold modelと`descriptive_full_fit`を明確に分離する。
+- 完了: 各Fold・各クラスで正係数、負係数、絶対値上位と対応語彙を抽出した。
+- 完了: OOF誤分類をtrue/pred、decision score、difficulty、template group、構造flag、寄与特徴で出力した。
+- 完了: 誤分類を曖昧性（difficulty）、複数意図（`multi_intent`/`secondary_intent`）、否定表現（`contains_negation`）、構造要素（header/signature/quoted-reply）で分析した。template・前処理・class境界別の追加分析はPhase 6以降の要否判断に委ねる（未実施）。
+- 完了: `extract_fold_coefficients`（評価用Fold再fit）と`extract_descriptive_full_fit_coefficients`（全データ`descriptive_full_fit`）を別関数・別CSVとして明確に分離した。
 
 **Main outputs（主な成果物）**
 
-- Planned: class/Fold coefficient artifacts
-- Planned: `outputs/runs/<run_id>/errors/`または同等の誤分類CSV/JSON
-- Planned: error taxonomy、代表sample、説明用表・図の機械可読source。
+- Completed: `outputs/runs/phase5-explain-seed42/fold_coefficients.csv`、`descriptive_full_fit_coefficients.csv`
+- Completed: `outputs/runs/phase5-explain-seed42/misclassifications.csv`（decision score・寄与特徴付き）
+- Completed: `outputs/runs/phase5-explain-seed42/error_category_summary.csv`、`structural_artifact_audit.csv`、`manifest.json`
 
 **Validation（検証方法）**
 
-- coefficient class indexとfeature nameが同じfitted Pipeline由来であること。
-- 全誤分類がOOF rowへ1:1対応し、説明専用fitを性能根拠に使っていないこと。
-- header/signature/template語が上位特徴にないか再監査。
+- coefficient class indexとfeature nameが同じfitted Pipeline由来であること（実装上、同一fit呼び出し内で`classifier.coef_`と`tfidf.get_feature_names_out()`を同時取得）。
+- 全誤分類がOOF rowへ1:1対応し、説明専用fitを性能根拠に使っていないこと（`misclassifications.csv`行数と実際のOOF true≠pred行数の一致をtestで確認、`descriptive_full_fit`は別ファイル）。
+- header/signature/template語が上位特徴にないか再監査（`structural_artifact_audit.csv`、上記実測所見）。
 
 **Completion criteria（完了条件）**
 
-- 全クラスの係数と全OOF誤分類が追跡可能。
-- 主要error category、原因仮説、リーク留保が文書化される。
+- 全クラスの係数と全OOF誤分類が追跡可能。→ 実データで確認済み。
+- 主要error category、原因仮説、リーク留保が文書化される。→ 上記実測所見に記載。
 
 **Transition gate（次Phaseへの移行条件）**
 

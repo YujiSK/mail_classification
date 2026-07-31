@@ -70,7 +70,7 @@ task10/
 ├── outputs/
 │   └── runs/<run_id>/
 │       ├── manifest.json
-│       ├── folds.csv
+│       ├── folds.json
 │       ├── metrics_long.csv
 │       ├── metrics_summary.csv
 │       ├── predictions_oof.csv
@@ -112,8 +112,8 @@ generation config + seed
   → body_text extraction
   → derived clean_text and processing stats
   → split decision (group structureあり: StratifiedGroupKFold / なし: StratifiedKFold)
-  → folds.csvを固定
-  → condition × model が同じfolds.csvを利用
+  → folds.jsonを固定
+  → condition × model が同じfolds.jsonを利用
   → Pipeline fit(train only) / transform+predict(validation only)
   → metrics_long + OOF predictions + explanations + timing
   → aggregation / paired differences
@@ -155,7 +155,7 @@ Coreのartifact schema・テスト・再現性が完成するまでExtensionを�
 
 ## 7. 評価フロー
 
-- Foldは一度生成し`folds.csv`として保存。
+- Foldは一度生成し、`FoldArtifact`契約（`docs/schemas/fold_artifact_schema.md`）に従い単一の`folds.json`として保存。
 - group構造が実在するときのみ`StratifiedGroupKFold(n_splits=5, shuffle=True, random_state=42)`。
 - 各condition/modelはFold IDとsample IDの完全一致を検証。
 - PipelineをFoldごとに新規生成。

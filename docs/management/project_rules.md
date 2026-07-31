@@ -97,7 +97,7 @@
 - fit/predict時間
 - Fold語彙数
 
-全条件・全モデルで同じsample/Fold indexを共有し、`folds.csv`を保存する。欠落・重複Foldはerrorにする。
+全条件・全モデルで同じsample/Fold indexを共有し、`FoldArtifact`契約（`docs/schemas/fold_artifact_schema.md`）に従い単一の`folds.json`を正本として保存する。欠落・重複Foldはerrorにする。
 
 ## 8. 比較実験
 

@@ -265,7 +265,7 @@ Python 3.14上でCore依存を固定し、group-awareな共通Fold artifactと�
 - 一度だけ共通5-fold assignmentを生成し、全条件・全モデル用artifactとして保存する。
 - TF-IDFをPipeline内に置き、LinearSVC／Logistic Regression factoryと最小smoke fitを実装する。
 - Coreアブレーション条件はPhase 2のデータ特性を確認後、Phase 3開始時に一主要因ずつの比較となるよう承認・確定する。D0〜D2等の名称と内容は、承認前には正式仕様として扱わない。
-- Fold保存形式の文書差異を解消する。`docs/management/project_rules.md`は`folds.csv`、Phase 1 schema文書はJSON preferredのため、正本形式と必要な派生形式を実装前に決定する。
+- 解消済み: Fold保存形式は`docs/schemas/fold_artifact_schema.md`が定義する単一UTF-8 JSON（`FoldArtifact`＝`metadata`＋`records`）を正本とし、`folds.json`として保存する。`project_rules.md`と`task10_architecture.md`に残っていた`folds.csv`表記（旧`RunManifest`設計前の記述）は本方針へ更新済み。CSVへの派生出力は現時点で不要と判断する。
 
 **Main outputs（主な成果物）**
 
@@ -635,13 +635,12 @@ Phase 7 Report / PDF / Finalization          [Planned]
 ### 未確認事項
 
 - 大学課題10の要件原本。特にBERT比較の必須/任意、提出形式、評価指標の指定。
-- Phase 3のFold artifact正本形式。project rulesのCSV指定とPhase 1 schema文書のJSON preferredを整合させる必要がある。
-- scikit-learnのPython 3.14互換性と確定version。
 - Coreアブレーション条件名・水準（D0〜D2等）は未確定。
 - Mermaidは現PDF基盤で未検証のため、本書では使用していない。
 
 ### 直近アクション
 
-1. Full承認証拠とPhase 2完了記録をcommit/pushし、local/remote同期とworking tree cleanを確認する。
-2. Phase 3を開始する場合は、dependency/Fold形式/Core条件の詳細計画を先に承認する。
-3. Phase 3開始時にscikit-learnのPython 3.14互換性をlock・import・最小Pipelineで検証する。
+1. 完了: Full承認証拠とPhase 2完了記録をcommit/pushし、local/remote同期とworking tree cleanを確認した。
+2. 完了: scikit-learn `1.9.0`のPython 3.14.4互換性をlock・import・最小Pipelineで検証した（commit `9c08871`）。
+3. 完了: Fold artifact正本形式をJSON（`folds.json`）に確定し、project rules/architectureの`folds.csv`表記を更新した。
+4. 次: Core条件（一主要因ずつのアブレーション水準）の詳細計画を承認後、共通5-fold assignment生成とFold Artifact書き出しを実装する。

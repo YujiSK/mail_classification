@@ -73,3 +73,8 @@
 - 2026-07-31 11:51:59 +07 — **結果**: 現在の実行環境はPython 3.14.4。Phase 2のscikit-learnはまだ追加せず、Phase 2開始時にuvで解決・lock・import・最小Pipeline実行を確認する方針とした。現時点でPython version変更は行わない。
 - 2026-07-31 11:51:59 +07 — **開始**: 依存group分離と日報をcommit後、`origin/agent/pdf-renderer-port`へPhase 1一式をpushして固定する。
 - 2026-07-31 11:52:31 +07 — **完了**: Phase 1本体`80c5f52`と依存境界補正`a01d49a`を`origin/agent/pdf-renderer-port`へpush成功。local HEADとremote-tracking HEADが`a01d49a7b46dde732ae8908708240d0b1381fa69`で一致し、push直後のworking treeはclean。本公開完了記録を追加commitして再同期する。
+
+## Phase 2 — 合成データ生成・品質保証
+
+- 2026-07-31 12:09:03 +07 — **開始**: 正式固定済みPhase 1 HEAD `8b78261`を起点にPhase 2用branchを作成・公開する。Phase 2は合成mailのtemplate/variation、seed固定生成、Smoke/Pilot、完全一致・正規化後重複、内容leak、class/difficulty/文書長品質、目視sample、Pilot合格後約800件生成に限定する。
+- 2026-07-31 12:09:03 +07 — **結果**: cleanな`8b78261`から`agent/task10-phase2-data-generation`を作成。scikit-learn追加・Python 3.14互換確認はPhase 3へ延期し、Phase 2ではTF-IDF、分類器、CV、scikit-learn、BERT、MinHashを実装しない。本記録のみをcommitしてupstreamを設定する。

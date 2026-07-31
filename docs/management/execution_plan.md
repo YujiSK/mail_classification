@@ -3,7 +3,7 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-07-31T17:23:58+07:00` |
+| Last verified | `2026-07-31T17:26:34+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
@@ -11,7 +11,7 @@
 | Phase 3〜4を`main`へ統合 | `77266ce`（`agent/task10-phase3-model-foundation`から`main`へfast-forward merge、push済み） |
 | Phase 5 implementation | `b2f76de`（説明性・誤分類分析、実データ実行結果`outputs/runs/phase5-explain-seed42/`はGit非追跡・再現可能） |
 | Phase 5を`main`へ統合 | `c1e8d10`（`agent/task10-phase5-explainability`から`main`へfast-forward merge、push済み） |
-| Phase 6 implementation | commit未確定（本コミット作成時に追記予定）。実データ実行結果は`outputs/extensions/phase6-minhash-seed42/`（Git非追跡・再現可能） |
+| Phase 6 implementation | `9da0449`（MinHashLSH近接重複センシティビティ、実データ実行結果`outputs/extensions/phase6-minhash-seed42/`はGit非追跡・再現可能） |
 | Branch | `agent/task10-phase6-extension`（`main`＝`c1e8d10`から新規作成） |
 | Current phase | Phase 2〜5 `Completed`（`main`へ統合・push済み）。Phase 6 `Completed`（MinHashLSHのみ承認・実施、BERT非実施、本branch、pushはこの後実施） |
 | Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |

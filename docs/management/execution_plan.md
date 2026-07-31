@@ -3,11 +3,11 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-07-31T16:34:52+07:00` |
+| Last verified | `2026-07-31T16:37:50+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
-| Phase 4 implementation | commit未確定（本コミット作成時に追記予定）。実データ実行結果は`outputs/runs/phase4-core-seed42/`（Git非追跡・再現可能） |
+| Phase 4 implementation | `9a6cf25`（Core実験runner、実データ実行結果`outputs/runs/phase4-core-seed42/`はGit非追跡・再現可能） |
 | Branch | `agent/task10-phase3-model-foundation` |
 | Current phase | Phase 2 `Completed`。Phase 3 `Completed`。Phase 4 `Completed`。Phase 5は未着手 |
 | Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |

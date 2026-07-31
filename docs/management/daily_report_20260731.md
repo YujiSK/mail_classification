@@ -145,3 +145,9 @@
 - 2026-07-31 14:59:15 +07 — **完了**: tracked decisionとFull data/config/template/review/leakage/summary/manifest/output-side decisionの全hash、24/24 pass、24 groups、manifest commit/clean状態をassertで相互照合。全test `126 passed in 1.36s`、`uv lock --check`は24 packages整合、`git diff --check`成功。Phase 2完了承認と状態文書をcommit/pushする。
 - 2026-07-31 14:59:53 +07 — **結果**: Full承認証拠、README、実行計画、日報をcommit `1392ba0`（`Approve Phase 2 Full dataset`）へ固定し、同branchへpush成功。local/upstreamは同commit、ahead/behind `0/0`。本push完了記録を分離commitし、再push後に最終clean同期を確認する。
 - 2026-07-31 15:00:37 +07 — **完了**: push完了記録をcommit `02e4b7a`（`Record Phase 2 completion`）として分離し、同branchへpush成功。local/upstreamは`02e4b7abe3bf85af6a175dd58c730cfcd5645220`で一致、ahead/behind `0/0`、working tree clean。Phase 2は完了、Phase 3はReadyだが未着手としてhandoffする。
+
+## ドキュメント構成整理
+
+- 2026-07-31 15:28:41 +07 — **開始**: `docs/`直下にフラットだった11 Markdown文書を役割別に`management/`（日報・実行計画・project rules）、`architecture/`（architecture・synthetic data design）、`contracts/`（preprocessing/data quality契約、human review手順）、`audits/`（資産インベントリ、課題6〜9監査、再利用マトリクス）へ再編し、移動に伴う参照pathを一括修正する。`docs/schemas/`と`docs/reviews/`は現状維持とし、`docs/`以外のsource/test/config/dataは変更対象外とする。
+- 2026-07-31 15:28:41 +07 — **結果**: `git mv`で対象11ファイルを新subfolderへ移動し、`README.md`・`AGENTS.md`・移動後の各文書内にあった旧`docs/xxx.md`形式の参照をすべて新subfolder pathへ置換した。`prior_artifacts_inventory.md`と`task10_reuse_matrix.md`は`docs/`配下でさらに1階層深くなったため、課題6〜9・Rabiloo資料への`../taskN/`・`../docs/`相対参照へ`../`を1段追加補正した。課題9自身が持つ`docs/execution_plan.md`への参照は課題10側の移動と無関係のため変更していない。
+- 2026-07-31 15:28:41 +07 — **完了**: 置換後に`pytest -q`で`126 passed`、staged差分に対する`git diff --check`成功を確認し、`git status`で`docs/`・`README.md`・`AGENTS.md`以外に変更がないことを確認した。commit `f230c33`（`docs: reorganize documentation directory structure and update references`）として記録し、pushは未実施。

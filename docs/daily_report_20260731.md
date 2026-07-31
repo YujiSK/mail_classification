@@ -49,3 +49,4 @@
 - 2026-07-31 10:49:43 +07 — **結果**: `git status/diff/ls-files --others`と履歴を確認。renderer・builder・`verify_pdf.py`は監査開始10:12:57より前のコミット`292c3d3`（10:05:27）に含まれ、今回監査中のコード変更ではない。未コミット差分は今回の監査文書6件と日報のみ。
 - 2026-07-31 10:51:12 +07 — **完了**: task10派生builder/rendererをB、元課題9版をB、安全設計思想をC、変更なしで再利用できる`timer`のみをAへ統一。テスト表現を「sandbox内27件成功＋環境制限1件、制限外個別成功、コード起因失敗なし」に統一。変更範囲の時系列証拠を日報へ追記し、末尾空白・`git diff --check`とも問題なし。
 - 2026-07-31 10:51:12 +07 — **開始**: 監査・規約文書一式を明示的にstageし、コミット後に`origin/agent/pdf-renderer-port`へpush。
+- 2026-07-31 10:51:54 +07 — **完了**: 監査・規約文書7ファイルをコミット`db7b869`（`Add prior-artifact audit and project rules`）として作成し、`origin/agent/pdf-renderer-port`へpush成功。完了記録を追加コミットして再同期する。

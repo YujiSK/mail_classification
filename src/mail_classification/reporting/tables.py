@@ -8,6 +8,7 @@ model-fitting code.
 from __future__ import annotations
 
 import csv
+from collections import Counter
 import json
 from pathlib import Path
 from statistics import mean, pstdev
@@ -151,6 +152,99 @@ def build_class_distribution_table(quality_summary_path: str | Path) -> str:
     return markdown_table(headers, rows)
 
 
+def _validated_fold_imbalance_rows(
+    analysis_path: str | Path,
+) -> tuple[list[dict[str, str]], list[dict[str, str]]]:
+    rows = read_csv_rows(analysis_path)
+    required = {
+        "data_hash",
+        "fold_artifact_hash",
+        "fold_id",
+        "label",
+        "n_template_groups",
+        "n_samples",
+        "template_group_breakdown",
+    }
+    if not rows or not required.issubset(rows[0]):
+        raise ValueError(f"invalid or empty fold imbalance artifact: {analysis_path}")
+    if len({row["data_hash"] for row in rows}) != 1:
+        raise ValueError("fold imbalance rows reference different data_hash values")
+    if len({row["fold_artifact_hash"] for row in rows}) != 1:
+        raise ValueError("fold imbalance rows reference different fold_artifact_hash values")
+
+    label_rows = [row for row in rows if row["label"] != "ALL"]
+    total_rows = [row for row in rows if row["label"] == "ALL"]
+    if not label_rows or not total_rows:
+        raise ValueError("fold imbalance artifact requires label rows and ALL total rows")
+    return label_rows, total_rows
+
+
+def build_fold_imbalance_table(analysis_path: str | Path) -> str:
+    """Render the exact per-fold/per-label group identities and sample counts."""
+    label_rows, _ = _validated_fold_imbalance_rows(analysis_path)
+    rows = sorted(label_rows, key=lambda row: (int(row["fold_id"]), row["label"]))
+    return markdown_table(
+        ["fold", "label", "groups", "group breakdown", "samples"],
+        [
+            [
+                row["fold_id"],
+                row["label"],
+                row["n_template_groups"],
+                row["template_group_breakdown"],
+                row["n_samples"],
+            ]
+            for row in rows
+        ],
+    )
+
+
+def build_fold_imbalance_narrative(analysis_path: str | Path) -> str:
+    """Build prose only from ``fold_imbalance_stats.csv`` values."""
+    label_rows, total_rows = _validated_fold_imbalance_rows(analysis_path)
+    group_cell_counts = Counter(int(row["n_template_groups"]) for row in label_rows)
+    class_sample_counts = [int(row["n_samples"]) for row in label_rows]
+    fold_totals = sorted(
+        (
+            int(row["fold_id"]),
+            int(row["n_template_groups"]),
+            int(row["n_samples"]),
+        )
+        for row in total_rows
+    )
+    multi_group_cells = sorted(
+        (
+            int(row["fold_id"]),
+            row["label"],
+            row["template_group_breakdown"],
+            int(row["n_samples"]),
+        )
+        for row in label_rows
+        if int(row["n_template_groups"]) > 1
+    )
+
+    group_distribution = "、".join(
+        f"{group_count} group={cell_count}セル"
+        for group_count, cell_count in sorted(group_cell_counts.items())
+    )
+    multi_detail = "、".join(
+        f"fold {fold_id}/{label}={breakdown}（{samples}件）"
+        for fold_id, label, breakdown, samples in multi_group_cells
+    )
+    fold_detail = "、".join(
+        f"fold {fold_id}={groups} groups/{samples}件"
+        for fold_id, groups, samples in fold_totals
+    )
+    fold_sample_counts = [samples for _, _, samples in fold_totals]
+
+    return (
+        f"`outputs/analysis/{Path(analysis_path).name}`の{len(label_rows)}個のfold×labelセルでは、"
+        f"{group_distribution}だった。複数groupセルの内訳は{multi_detail}。"
+        f"label別validation sample数は{min(class_sample_counts)}〜{max(class_sample_counts)}件、"
+        f"fold全体は{fold_detail}で、最小{min(fold_sample_counts)}件・最大{max(fold_sample_counts)}件"
+        "となった。"
+    )
+
+
 def verify_bert_alignment(
     bert_run_dir: str | Path, fold_artifact_path: str | Path, expected_data_hash: str
 ) -> None:
@@ -279,4 +373,79 @@ def build_bert_required_metrics_table(core_dir: str | Path, bert_run_dir: str | 
         rows.append([metric, f"{required_core_metrics[metric]:.3f}", f"{bert_mean:.3f}"])
     return markdown_table(
         ["metric", "TF-IDF + LinearSVC (D2)", "DistilBERT (fine-tuned)"], rows
+    )
+
+
+def build_structural_ratio_table(structural_ratio_comparison_path: str | Path) -> str:
+    """Renders outputs/analysis/structural_ratio_comparison.json (population
+    vs. misclassified ratio per structural flag, with a two-proportion z-test
+    p-value; never claims significance itself, only reports the computed value)."""
+    payload = json.loads(Path(structural_ratio_comparison_path).read_text(encoding="utf-8"))
+    headers = [
+        "flag",
+        "population ratio",
+        "misclassified ratio",
+        "difference",
+        "exceeds population",
+        "p-value (two-proportion z)",
+    ]
+    table_rows = []
+    for flag, stats in sorted(payload["flags"].items()):
+        table_rows.append(
+            [
+                flag,
+                f"{stats['population_ratio']:.3f}",
+                f"{stats['misclassified_ratio']:.3f}",
+                f"{stats['ratio_difference']:+.3f}",
+                "Yes" if stats["exceeds_population_ratio"] else "No",
+                f"{stats['two_proportion_z_p_value']:.3f}",
+            ]
+        )
+    return markdown_table(headers, table_rows)
+
+
+_SIGNIFICANCE_ALPHA = 0.05
+
+
+def build_structural_ratio_narrative(structural_ratio_comparison_path: str | Path) -> str:
+    """One paragraph, generated entirely from structural_ratio_comparison.json,
+    stating for each flag whether the misclassified-subset ratio significantly
+    exceeds the population ratio (two-proportion z-test at alpha=0.05)."""
+    payload = json.loads(Path(structural_ratio_comparison_path).read_text(encoding="utf-8"))
+    flags = payload["flags"]
+
+    significant_exceed = sorted(
+        flag
+        for flag, stats in flags.items()
+        if stats["exceeds_population_ratio"] and stats["two_proportion_z_p_value"] < _SIGNIFICANCE_ALPHA
+    )
+    not_significant = sorted(
+        flag
+        for flag, stats in flags.items()
+        if flag not in significant_exceed
+    )
+
+    per_flag_detail = "、".join(
+        f"{flag}: 母集団{flags[flag]['population_ratio']:.1%}／誤分類{flags[flag]['misclassified_ratio']:.1%}"
+        f"（差{flags[flag]['ratio_difference']:+.1%}、p={flags[flag]['two_proportion_z_p_value']:.3f}）"
+        for flag in sorted(flags)
+    )
+
+    if significant_exceed:
+        conclusion = (
+            f"{'、'.join(significant_exceed)}は誤分類における出現比率が母集団比率よりp<{_SIGNIFICANCE_ALPHA}で"
+            "有意に高く、単なる母集団由来の頻度だけでは説明できないバイアスが示唆される。"
+        )
+    else:
+        conclusion = (
+            "いずれの構造要素も誤分類比率と母集団比率の差はp<"
+            f"{_SIGNIFICANCE_ALPHA}で有意ではなく（"
+            f"{'、'.join(not_significant)}）、構造要素の混入は母集団由来の頻度で説明可能な範囲であり、"
+            "誤分類に特有の追加バイアスを生んでいるという根拠は本分析では確認されなかった。"
+        )
+
+    return (
+        f"`outputs/analysis/{Path(structural_ratio_comparison_path).name}`（母集団{payload['population_total']}件、"
+        f"誤分類{payload['misclassified_total']}件、{payload['misclassified_grain']}）による比較: "
+        f"{per_flag_detail}。{conclusion}"
     )

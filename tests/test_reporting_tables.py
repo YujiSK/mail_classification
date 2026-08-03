@@ -465,3 +465,145 @@ def test_build_bert_required_metrics_table(tmp_path: Path) -> None:
     assert "| Precision (macro) | 0.630 | 0.820 |" in result
     assert "| Recall (macro) | 0.610 | 0.770 |" in result
     assert "| Macro-F1 | 0.600 | 0.750 |" in result
+
+
+def _write_structural_ratio_json(path: Path, flags: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "population_total": 800,
+                "misclassified_total": 1883,
+                "misclassified_grain": "one row per (sample_id, condition, model) OOF instance",
+                "flags": flags,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_build_structural_ratio_table(tmp_path: Path) -> None:
+    path = tmp_path / "structural_ratio_comparison.json"
+    _write_structural_ratio_json(
+        path,
+        {
+            "has_header": {
+                "population_ratio": 0.581,
+                "misclassified_ratio": 0.578,
+                "ratio_difference": -0.003,
+                "exceeds_population_ratio": False,
+                "two_proportion_z_p_value": 0.869,
+            }
+        },
+    )
+
+    result = tables.build_structural_ratio_table(path)
+    assert "has_header" in result
+    assert "0.581" in result
+    assert "0.578" in result
+    assert "No" in result
+    assert "0.869" in result
+
+
+def test_build_structural_ratio_narrative_reports_no_significant_bias(tmp_path: Path) -> None:
+    path = tmp_path / "structural_ratio_comparison.json"
+    _write_structural_ratio_json(
+        path,
+        {
+            "has_header": {
+                "population_ratio": 0.581,
+                "misclassified_ratio": 0.578,
+                "ratio_difference": -0.003,
+                "exceeds_population_ratio": False,
+                "two_proportion_z_p_value": 0.869,
+            },
+            "has_signature": {
+                "population_ratio": 0.565,
+                "misclassified_ratio": 0.586,
+                "ratio_difference": 0.021,
+                "exceeds_population_ratio": True,
+                "two_proportion_z_p_value": 0.307,
+            },
+        },
+    )
+
+    result = tables.build_structural_ratio_narrative(path)
+    assert "has_header" in result
+    assert "has_signature" in result
+    assert "有意ではなく" in result
+    assert "追加バイアスを生んでいるという根拠は本分析では確認されなかった" in result
+
+
+def test_build_structural_ratio_narrative_reports_significant_bias(tmp_path: Path) -> None:
+    path = tmp_path / "structural_ratio_comparison.json"
+    _write_structural_ratio_json(
+        path,
+        {
+            "has_header": {
+                "population_ratio": 0.10,
+                "misclassified_ratio": 0.90,
+                "ratio_difference": 0.80,
+                "exceeds_population_ratio": True,
+                "two_proportion_z_p_value": 0.001,
+            }
+        },
+    )
+
+    result = tables.build_structural_ratio_narrative(path)
+    assert "有意に高く" in result
+    assert "バイアスが示唆される" in result
+
+
+def _write_fold_imbalance_csv(path: Path, rows: list[dict]) -> None:
+    fieldnames = [
+        "data_hash",
+        "fold_artifact_hash",
+        "fold_id",
+        "label",
+        "n_template_groups",
+        "n_samples",
+        "template_group_breakdown",
+    ]
+    _write_csv(path, rows, fieldnames)
+
+
+def _fold_imbalance_fixture_rows() -> list[dict]:
+    common = {"data_hash": "a" * 64, "fold_artifact_hash": "f" * 64}
+    return [
+        {**common, "fold_id": "0", "label": "billing", "n_template_groups": "1", "n_samples": "33", "template_group_breakdown": "tg01:33"},
+        {**common, "fold_id": "0", "label": "technical_issue", "n_template_groups": "2", "n_samples": "66", "template_group_breakdown": "tg02:33;tg03:33"},
+        {**common, "fold_id": "0", "label": "ALL", "n_template_groups": "3", "n_samples": "99", "template_group_breakdown": "tg01:33;tg02:33;tg03:33"},
+        {**common, "fold_id": "1", "label": "billing", "n_template_groups": "1", "n_samples": "34", "template_group_breakdown": "tg04:34"},
+        {**common, "fold_id": "1", "label": "technical_issue", "n_template_groups": "1", "n_samples": "33", "template_group_breakdown": "tg05:33"},
+        {**common, "fold_id": "1", "label": "ALL", "n_template_groups": "2", "n_samples": "67", "template_group_breakdown": "tg04:34;tg05:33"},
+    ]
+
+
+def test_build_fold_imbalance_table(tmp_path: Path) -> None:
+    path = tmp_path / "fold_imbalance_stats.csv"
+    _write_fold_imbalance_csv(path, _fold_imbalance_fixture_rows())
+
+    result = tables.build_fold_imbalance_table(path)
+    assert "tg02:33;tg03:33" in result
+    assert "technical_issue" in result
+    assert "66" in result
+
+
+def test_build_fold_imbalance_table_rejects_inconsistent_data_hash(tmp_path: Path) -> None:
+    path = tmp_path / "fold_imbalance_stats.csv"
+    rows = _fold_imbalance_fixture_rows()
+    rows[0]["data_hash"] = "b" * 64
+    _write_fold_imbalance_csv(path, rows)
+
+    with pytest.raises(ValueError, match="different data_hash"):
+        tables.build_fold_imbalance_table(path)
+
+
+def test_build_fold_imbalance_narrative(tmp_path: Path) -> None:
+    path = tmp_path / "fold_imbalance_stats.csv"
+    _write_fold_imbalance_csv(path, _fold_imbalance_fixture_rows())
+
+    result = tables.build_fold_imbalance_narrative(path)
+    assert "fold_imbalance_stats.csv" in result
+    assert "fold 0/technical_issue=tg02:33;tg03:33（66件）" in result
+    assert "最小67件・最大99件" in result

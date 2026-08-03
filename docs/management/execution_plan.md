@@ -3,7 +3,7 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-08-03T15:40:07+07:00` |
+| Last verified | `2026-08-03T16:34:05+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
@@ -689,7 +689,8 @@ Phase 8 DistilBERT External Comparison       [In progress: validated, Git fixati
 ### 未確認事項
 
 - Mermaidは現PDF基盤で未検証のため、本書では使用していない。
-- `structural_content`カテゴリの誤分類比率が母集団比率（header/signature/quoted reply存在率）を実際に超過しているかは、Phase 5でも「頻度が高い」以上の因果検証を行っておらず未検証のまま。
+
+`structural_content`カテゴリの母集団比較とfold size不均衡の定量化は、`outputs/analysis/structural_ratio_comparison.json`／`fold_imbalance_stats.csv`（`src/mail_classification/analysis/`、pandas使用）で検証済みとなり本節から解消した。結果: header／quoted_replyは誤分類比率が母集団比率よりむしろ低く、signatureのみ+2.1%高いがp=0.307（two-proportion z検定）で有意ではなく、追加バイアスの根拠は確認されなかった。fold size不均衡はlabelあたり6 template groups÷5 foldsに起因し、2 template groups（66件）を持つセルはfold 0/product_inquiry・fold 1/technical_issue・fold 3/billing・fold 4/account_supportの4件と特定された。詳細はreport第3・4章参照。
 
 ### 直近アクション
 

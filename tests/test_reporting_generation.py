@@ -277,3 +277,73 @@ def test_build_report_with_real_bert_comparison_chapter(tmp_path: Path) -> None:
 
     check_result = json.loads(result.layout_check_path.read_text(encoding="utf-8"))
     assert check_result["status"] != "FAIL"
+
+
+def test_build_report_with_real_fold_imbalance_and_structural_ratio_chapters(
+    tmp_path: Path,
+) -> None:
+    from mail_classification.analysis import (
+        write_fold_imbalance_stats,
+        write_structural_ratio_comparison,
+    )
+
+    full_data_path = ROOT / "data" / "raw" / "full_emails.jsonl"
+    decision_path = ROOT / "docs" / "reviews" / "full_review_decision.json"
+    quality_summary_path = ROOT / "outputs" / "data_quality" / "full_summary.json"
+    if not full_data_path.is_file() or not quality_summary_path.is_file():
+        pytest.skip("Full dataset or outputs/data_quality/full_summary.json is not generated locally")
+
+    data_hash = verify_full_dataset_hash(full_data_path, decision_path)
+    records = load_verified_full_dataset(full_data_path, decision_path)
+    artifact = build_common_folds(records, data_hash=data_hash)
+    fold_path = tmp_path / "outputs" / "folds" / "common_folds.json"
+    write_fold_artifact(fold_path, artifact)
+
+    core_run_dir = run_and_write_core_experiments(
+        records,
+        fold_path,
+        tmp_path,
+        conditions=("D0", "D1", "D2"),
+        models=("linear_svc", "logistic_regression"),
+        run_id="analysis-smoke-core",
+    )
+    explain_dir = run_and_write_explainability(
+        records,
+        fold_path,
+        core_run_dir / "predictions_oof.csv",
+        tmp_path,
+        conditions=("D0", "D1", "D2"),
+        models=("linear_svc", "logistic_regression"),
+        run_id="analysis-smoke-explain",
+    )
+    run_and_write_minhash_extension(records, data_hash, tmp_path, run_id="analysis-smoke-extension")
+
+    fold_imbalance_path = write_fold_imbalance_stats(
+        fold_path, full_data_path, tmp_path / "outputs" / "analysis" / "fold_imbalance_stats.csv"
+    )
+    structural_ratio_path = write_structural_ratio_comparison(
+        full_data_path,
+        explain_dir / "misclassifications.csv",
+        tmp_path / "outputs" / "analysis" / "structural_ratio_comparison.json",
+    )
+
+    result = generation.write_report(
+        tmp_path,
+        run_id="analysis-smoke-report",
+        core_run_id="analysis-smoke-core",
+        explain_run_id="analysis-smoke-explain",
+        extension_run_id="analysis-smoke-extension",
+        quality_summary_path=quality_summary_path,
+        fold_imbalance_path=fold_imbalance_path,
+        structural_ratio_path=structural_ratio_path,
+    )
+
+    markdown_text = result.markdown_path.read_text(encoding="utf-8")
+    assert "outputs/analysis/fold_imbalance_stats.csv" in markdown_text
+    assert "outputs/analysis/structural_ratio_comparison.json" in markdown_text
+    assert "group breakdown" in markdown_text
+    assert "has_header" in markdown_text and "has_signature" in markdown_text
+    assert "本分析では未検証" not in markdown_text
+
+    check_result = json.loads(result.layout_check_path.read_text(encoding="utf-8"))
+    assert check_result["status"] != "FAIL"

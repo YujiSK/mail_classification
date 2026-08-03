@@ -37,6 +37,10 @@ DEFAULT_EXPLAIN_RUN_ID = "phase5-explain-seed42"
 DEFAULT_EXTENSION_RUN_ID = "phase6-minhash-seed42"
 DEFAULT_BERT_RUN_ID = "phase8-bert-seed42"
 DEFAULT_QUALITY_SUMMARY_RELATIVE = Path("outputs") / "data_quality" / "full_summary.json"
+DEFAULT_STRUCTURAL_RATIO_RELATIVE = (
+    Path("outputs") / "analysis" / "structural_ratio_comparison.json"
+)
+DEFAULT_FOLD_IMBALANCE_RELATIVE = Path("outputs") / "analysis" / "fold_imbalance_stats.csv"
 
 
 def _load_manifest(run_dir: Path) -> dict:
@@ -136,6 +140,8 @@ def build_report_markdown(
     *,
     bert_run_dir: Path | None = None,
     fold_artifact_path: Path | None = None,
+    structural_ratio_path: Path | None = None,
+    fold_imbalance_path: Path | None = None,
 ) -> str:
     if bert_run_dir is not None and fold_artifact_path is None:
         raise ValueError("fold_artifact_path is required when bert_run_dir is given")
@@ -150,6 +156,26 @@ def build_report_markdown(
     error_table = tables.build_error_category_summary_table(explain_dir)
     extension_table = tables.build_extension_summary_table(extension_dir)
     class_table = tables.build_class_distribution_table(quality_summary_path)
+    structural_ratio_table = (
+        tables.build_structural_ratio_table(structural_ratio_path)
+        if structural_ratio_path is not None
+        else "（母集団比較の機械可読artifactは本buildで未選択）"
+    )
+    structural_ratio_narrative = (
+        tables.build_structural_ratio_narrative(structural_ratio_path)
+        if structural_ratio_path is not None
+        else "誤分類での比率が母集団比率より高いかは本分析では未検証である。"
+    )
+    fold_imbalance_table = (
+        tables.build_fold_imbalance_table(fold_imbalance_path)
+        if fold_imbalance_path is not None
+        else "（fold不均衡の機械可読artifactは本buildで未選択）"
+    )
+    fold_imbalance_narrative = (
+        tables.build_fold_imbalance_narrative(fold_imbalance_path)
+        if fold_imbalance_path is not None
+        else "labelあたり6 groupsを5 foldsへ割り当てるため均等配分できない。"
+    )
 
     data_hash = manifests["core"]["data_hash"]
     fold_hash = manifests["core"]["fold_artifact_hash"]
@@ -236,13 +262,15 @@ Full datasetは{quality_summary["total_count"]}件、4クラス均等配分、{q
 
 {paired_table}
 
-fold間標準偏差は0.08〜0.13と大きい。これはlabelあたりのtemplate group数がn_splitsで割り切れないために生じるfold size不均衡（`docs/contracts/phase3_model_contract.md`記載の既知の限界）が一因と見られる。
+fold間標準偏差は0.08〜0.13と大きい。既存FoldとFullデータを突合した機械可読集計は次のとおりである。
+
+{fold_imbalance_table}
 
 ### 考察: アブレーション条件によるスコア変動とfold不均衡の意味
 
 - **D0→D1（bigram追加）の効果はモデルで符号が異なる**: `linear_svc`ではmacro-F1が{d1_diff_svc:+.3f}（paired differencesより）と改善する一方、`logistic_regression`では{d1_diff_lr:+.3f}と悪化している。bigramは特徴空間の次元を増やし語彙をより疎にするが、マージン最大化を目的とするLinearSVCは高次元・疎な特徴空間でも分離超平面を比較的安定して学習できるのに対し、対数損失を最小化するLogistic Regressionは少数の強いbigram特徴に適合しやすく、Foldごとに異なる語彙（TF-IDFはFold内でのみfitする設計のため）の影響をより大きく受ける可能性がある。これは今回のデータ・モデル設定下での観察であり、一般的なLinearSVC対Logistic Regressionの優劣を主張するものではない（仮説）。
 - **D0→D2（前処理強化）の効果も一様ではない**: `linear_svc`で{d2_diff_svc:+.3f}、`logistic_regression`で{d2_diff_lr:+.3f}。header／signature／quoted replyの除去とURL／emailマスクは構造的ノイズを除去する一方、これらの要素に付随していた（ラベルと直接関係しないが頻度に偏りのある）語彙も同時に失われるため、効果はモデル・データの偶然性に応じて相殺され得る。「前処理を強くすれば必ず改善する」という前提は本データでは支持されない。
-- **fold間標準偏差が大きい具体的な理由**: 各labelはtemplate groupを6個持つが、5-foldへ均等分配できない（6÷5）。`StratifiedGroupKFold`は必ず1 foldにつき1 labelあたり2 group分（約66件）を割り当て、残り4 foldsは1 group分（33〜34件）とする。同一template groupのsampleは語彙・表現が類似するため、「2 group分を含むfold」と「1 group分のみのfold」ではvalidation setの語彙構成自体が異なり、単純なランダムサンプリング以上にfold間でスコアがばらつく。これはCV実装の不具合ではなく、24 template groups（label当たり6 groups）× 5 foldsという設計上の数学的必然である。
+- **fold間標準偏差が大きい具体的な理由**: {fold_imbalance_narrative} 同一template groupのsampleは語彙・表現が類似するため、1 groupのvalidationセルと2 groupsのセルでは語彙構成自体が異なり、単純なランダムサンプリング以上にfold間でスコアがばらつく。これはCV実装の不具合ではなく、24 template groups（label当たり6 groups）× 5 foldsという設計上の制約である。
 
 ## 第4章 説明性・誤分類分析
 
@@ -250,11 +278,15 @@ fold間標準偏差は0.08〜0.13と大きい。これはlabelあたりのtempla
 
 `structural_artifact_audit.csv`の再監査では、`subject`／`from`／`sent`／`cc`／`bcc`／`url`／`wrote`はいずれのtop featureにも出現せず、header／URL由来の明確なリークは確認されなかった。`email`のみ全条件のtop_absolute featureに出現するが、D0（header／URL／email非除去）でも同様に出現するため、`<EMAIL>`置換由来の構造artifactというより合成本文中の自然な語彙である可能性が高いと仮説的に判断する（断定しない）。
 
-`structural_content`カテゴリが最多だが、これは合成データ全体でのheader／signature／quoted reply存在比率（{structure_ratios["has_header"]:.0%}／{structure_ratios["has_signature"]:.0%}／{structure_ratios["has_quoted_reply"]:.0%}）自体が高いためであり、誤分類での比率が母集団比率より高いかは本分析では未検証である。
+`structural_content`カテゴリが最多だが、これは合成データ全体でのheader／signature／quoted reply存在比率（{structure_ratios["has_header"]:.0%}／{structure_ratios["has_signature"]:.0%}／{structure_ratios["has_quoted_reply"]:.0%}）自体が高いためと見られる。母集団比率と誤分類比率を機械可読artifactで直接比較した結果は次のとおりである。
+
+{structural_ratio_table}
+
+{structural_ratio_narrative}
 
 ### 考察: 誤分類カテゴリの背景とTF-IDFの構造的限界
 
-- **`structural_content`が最多である背景**: TF-IDFはbag-of-words表現であり、語順や文脈を利用しない。header／signature／quoted replyを含むmailは本文中の総token数が増え、ラベルと直接関係しない語（署名の氏名、返信ヘッダの日時表記など）がベクトルに追加される。これらの語自体は強い係数を持たない（上記structural_artifact_auditの再監査結果参照）が、文書全体のTF正規化（各語の相対頻度）を薄める方向へ働き、真にラベルと関連する語のTF-IDF重みを相対的に低下させている可能性がある（仮説、本分析では因果関係までは検証していない）。
+- **`structural_content`が最多である背景**: TF-IDFはbag-of-words表現であり、語順や文脈を利用しない。header／signature／quoted replyを含むmailは本文中の総token数が増え、ラベルと直接関係しない語（署名の氏名、返信ヘッダの日時表記など）がベクトルに追加される。これらの語自体は強い係数を持たない（上記structural_artifact_auditの再監査結果参照）が、文書全体のTF正規化（各語の相対頻度）を薄める方向へ働き、真にラベルと関連する語のTF-IDF重みを相対的に低下させている可能性がある（仮説）。この仮説と母集団比較の実測結果（上記表・考察参照）を合わせると、`structural_content`カテゴリの多さは主として母集団側の存在比率の高さで説明されると見られる。
 - **`multi_intent`（複数意図）の誤分類**: 1通のmailが複数カテゴリに関連する内容を含む場合、TF-IDFベクトルは両カテゴリの語彙が混在した単一の点として表現され、単一ラベル分類の決定境界上でどちらのクラス領域に属するかが本質的に曖昧になる。これは前処理やモデル選択では解消できない、single-label分類の設計とmulti-intentな入力との間の構造的な不整合である。
 - **TF-IDF＋線形モデルの構造的限界**: 本手法は「どの語が出現したか」のみを特徴とし、語順・否定のスコープ・文脈依存の意味を直接モデル化しない。decision score分析（`misclassifications.csv`の`predicted_top_features`／`true_top_features`列）で確認した「正解class寄りの語が存在するにもかかわらず誤分類となる例」は、個々の強い語の存在だけでは文全体の意図を正しく判定できないことを示唆している。文脈を考慮するTransformer系モデルとの比較は本Phaseの範囲外だが、将来的な検証候補である。
 
@@ -286,8 +318,8 @@ fold間標準偏差は0.08〜0.13と大きい。これはlabelあたりのtempla
 
 {_bert_limitation_bullet(bert_run_dir)}
 - `TfidfVectorizer`は`stop_words`未設定であり、一般的な機能語が上位寄与特徴に頻出する。D0〜D2は承認済みの固定specであり本Phaseでは変更していない。
-- fold sizeの不均衡（第3章参照）。
-- `structural_content`カテゴリの母集団比率超過は未検証（第4章参照）。
+- {"fold sizeの不均衡は`outputs/analysis/fold_imbalance_stats.csv`で定量化済み（第3章参照）。" if fold_imbalance_path is not None else "fold sizeの不均衡（第3章参照）。"}
+- {"`structural_content`カテゴリの母集団比率との比較は`outputs/analysis/structural_ratio_comparison.json`で検証済み（第4章参照）。" if structural_ratio_path is not None else "`structural_content`カテゴリの母集団比率超過は未検証（第4章参照）。"}
 """
 
 
@@ -311,6 +343,8 @@ def write_report(
     extension_run_id: str = DEFAULT_EXTENSION_RUN_ID,
     bert_run_id: str | None = None,
     quality_summary_path: str | Path | None = None,
+    structural_ratio_path: str | Path | None = None,
+    fold_imbalance_path: str | Path | None = None,
 ) -> ReportBuildResult:
     """Build report.md + figures, then HTML -> PDF -> layout check, all under
     ``outputs/reports/<run_id>/``. Raises if the selected runs disagree on
@@ -318,12 +352,30 @@ def write_report(
 
     bert_run_id is optional: pass it (e.g. DEFAULT_BERT_RUN_ID) to include the
     external DistilBERT comparison chapter; omit it to build the Core-only
-    report unchanged."""
+    report unchanged. structural_ratio_path/fold_imbalance_path each default to
+    their outputs/analysis/ path under project_root and are silently omitted
+    from the report if that file does not exist."""
     project_root = Path(project_root).resolve()
     resolved_quality_summary_path = (
         Path(quality_summary_path)
         if quality_summary_path is not None
         else project_root / DEFAULT_QUALITY_SUMMARY_RELATIVE
+    )
+    candidate_structural_ratio_path = (
+        Path(structural_ratio_path)
+        if structural_ratio_path is not None
+        else project_root / DEFAULT_STRUCTURAL_RATIO_RELATIVE
+    )
+    resolved_structural_ratio_path = (
+        candidate_structural_ratio_path if candidate_structural_ratio_path.is_file() else None
+    )
+    candidate_fold_imbalance_path = (
+        Path(fold_imbalance_path)
+        if fold_imbalance_path is not None
+        else project_root / DEFAULT_FOLD_IMBALANCE_RELATIVE
+    )
+    resolved_fold_imbalance_path = (
+        candidate_fold_imbalance_path if candidate_fold_imbalance_path.is_file() else None
     )
 
     manifests = verify_selected_runs_consistent(
@@ -352,6 +404,8 @@ def write_report(
         resolved_quality_summary_path,
         bert_run_dir=bert_dir,
         fold_artifact_path=fold_artifact_path,
+        structural_ratio_path=resolved_structural_ratio_path,
+        fold_imbalance_path=resolved_fold_imbalance_path,
     )
     markdown_path = report_dir / "report.md"
     markdown_path.write_text(markdown_text, encoding="utf-8")
@@ -379,6 +433,16 @@ def write_report(
             explain_run_id,
             extension_run_id,
             *([bert_run_id] if bert_run_id is not None else []),
+            *(
+                [f"structural_ratio={resolved_structural_ratio_path}"]
+                if resolved_structural_ratio_path is not None
+                else []
+            ),
+            *(
+                [f"fold_imbalance={resolved_fold_imbalance_path}"]
+                if resolved_fold_imbalance_path is not None
+                else []
+            ),
         ],
         python_version=platform.python_version(),
         platform=platform.platform(),

@@ -211,6 +211,7 @@ outputs/folds/
 outputs/runs/*
 outputs/extensions/
 outputs/reports/
+outputs/analysis/
 
 # Phase 8 BERT comparison ran externally on Google Colab GPU; unlike the
 # other outputs/runs/ entries above, this repo has no code path that

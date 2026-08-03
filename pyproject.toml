@@ -21,6 +21,7 @@ reporting = [
   "beautifulsoup4>=4.12,<5",
   "markdown>=3.5,<4",
   "pdfplumber>=0.11,<1",
+  "pandas>=2,<3",
 ]
 
 [tool.hatch.build.targets.wheel]

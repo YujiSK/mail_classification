@@ -12,11 +12,11 @@
 | Phase 5 implementation | `b2f76de`（説明性・誤分類分析、実データ実行結果`outputs/runs/phase5-explain-seed42/`はGit非追跡・再現可能） |
 | Phase 5を`main`へ統合 | `c1e8d10`（`agent/task10-phase5-explainability`から`main`へfast-forward merge、push済み） |
 | Phase 6 implementation | `9da0449`（MinHashLSH近接重複センシティビティ、実データ実行結果`outputs/extensions/phase6-minhash-seed42/`はGit非追跡・再現可能） |
-| Phase 6を`main`へ統合 | `97906d3`（`agent/task10-phase6-extension`から`main`へfast-forward merge、User承認済み、push済み） |
+| Phase 6を`main`へ統合 | 実施中（`agent/task10-phase6-extension`から`main`へfast-forward merge予定、User承認済み）。統合commit hashは統合後の後続commitで記録する |
 | Branch | `agent/task10-phase6-extension`（`main`＝`c1e8d10`から新規作成、以後`main`と同一commitへ統合済み） |
 | Current phase | Phase 2〜6 `Completed`（`main`へ統合・push済み）。Phase 7は未着手 |
 | Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`（Phase 0〜6）、`docs/management/daily_report_20260803.md`（セッション再開・状況確認、Phase 6統合） |
-| Remote note | `main`は`97906d3`（Phase 6まで）まで統合・push済み。全作業branchが`main`へ統合済みで、未統合branchはない |
+| Remote note | `main`は本commit確定後にfast-forward mergeでPhase 6まで統合予定。統合完了後、全作業branchが`main`へ統合済みとなる |
 
 Coreテーマ:
 

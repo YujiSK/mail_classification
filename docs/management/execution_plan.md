@@ -3,7 +3,7 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-08-03T08:52:51+07:00` |
+| Last verified | `2026-08-03T11:02:09+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
@@ -12,10 +12,11 @@
 | Phase 5 implementation | `b2f76de`（説明性・誤分類分析、実データ実行結果`outputs/runs/phase5-explain-seed42/`はGit非追跡・再現可能） |
 | Phase 5を`main`へ統合 | `c1e8d10`（`agent/task10-phase5-explainability`から`main`へfast-forward merge、push済み） |
 | Phase 6 implementation | `9da0449`（MinHashLSH近接重複センシティビティ、実データ実行結果`outputs/extensions/phase6-minhash-seed42/`はGit非追跡・再現可能） |
-| Branch | `agent/task10-phase6-extension`（`main`＝`c1e8d10`から新規作成） |
-| Current phase | Phase 2〜5 `Completed`（`main`へ統合・push済み）。Phase 6 `Completed`（MinHashLSHのみ承認・実施、BERT非実施、push済み、`main`への統合はユーザー確認待ち）。Phase 7は未着手 |
-| Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`（Phase 0〜6）、`docs/management/daily_report_20260803.md`（セッション再開・状況確認）、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |
-| Remote note | `main`は`c1e8d10`（Phase 5まで）で停止。`agent/task10-phase6-extension`は`f847cd3`までpush済みだが`main`未統合（ユーザー確認待ち） |
+| Phase 6を`main`へ統合 | `97906d3`（`agent/task10-phase6-extension`から`main`へfast-forward merge、User承認済み、push済み） |
+| Branch | `agent/task10-phase6-extension`（`main`＝`c1e8d10`から新規作成、以後`main`と同一commitへ統合済み） |
+| Current phase | Phase 2〜6 `Completed`（`main`へ統合・push済み）。Phase 7は未着手 |
+| Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`（Phase 0〜6）、`docs/management/daily_report_20260803.md`（セッション再開・状況確認、Phase 6統合） |
+| Remote note | `main`は`97906d3`（Phase 6まで）まで統合・push済み。全作業branchが`main`へ統合済みで、未統合branchはない |
 
 Coreテーマ:
 

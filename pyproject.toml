@@ -27,5 +27,5 @@ reporting = [
 packages = ["src/mail_classification"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["tests"]

@@ -5,8 +5,11 @@ import sys
 
 
 def test_import_has_no_file_generation_or_network_setup(tmp_path: Path) -> None:
-    source = Path(__file__).parents[1] / "src"
-    env = {**os.environ, "PYTHONPATH": str(source)}
+    project_root = Path(__file__).parents[1]
+    source = project_root / "src"
+    # reporting imports tools.pdf_renderer, which lives at the project root
+    # (not an installed package), so it needs the root on PYTHONPATH too.
+    env = {**os.environ, "PYTHONPATH": f"{source}{os.pathsep}{project_root}"}
     command = [
         sys.executable,
         "-c",
@@ -20,6 +23,7 @@ def test_import_has_no_file_generation_or_network_setup(tmp_path: Path) -> None:
             "import mail_classification.models; "
             "import mail_classification.explain; "
             "import mail_classification.extensions; "
+            "import mail_classification.reporting; "
             # 'socket' is excluded: scikit-learn's joblib backend imports the
             # stdlib socket module for local multiprocessing plumbing, not
             # network I/O. 'requests'/'urllib.request' remain a real signal.

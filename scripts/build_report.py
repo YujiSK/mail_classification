@@ -9,11 +9,15 @@ import sys
 # which lives at the project root and is not an installed package.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from mail_classification.reporting import write_report
+from mail_classification.reporting import DEFAULT_BERT_RUN_ID, write_report
 
 
 if __name__ == "__main__":
-    result = write_report(Path(__file__).parents[1])
+    project_root = Path(__file__).parents[1]
+    bert_dir = project_root / "outputs" / "runs" / DEFAULT_BERT_RUN_ID
+    bert_run_id = DEFAULT_BERT_RUN_ID if bert_dir.is_dir() else None
+
+    result = write_report(project_root, bert_run_id=bert_run_id)
     print(f"report.md: {result.markdown_path}")
     print(f"report.pdf: {result.pdf_path}")
     print(f"layout_check.json: {result.layout_check_path}")

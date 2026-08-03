@@ -3,7 +3,7 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-08-03T11:50:41+07:00` |
+| Last verified | `2026-08-03T15:34:56+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
@@ -15,10 +15,11 @@
 | Phase 6を`main`へ統合 | `2668a06`（`agent/task10-phase6-extension`から`main`へfast-forward merge、User承認済み） |
 | Phase 7 implementation | `0c6ce96`（reporting module・`scripts/build_report.py`）、`3074a1d`（README全面更新）。実データ実行結果`outputs/reports/phase7-report-phase4-core-seed42/`はGit非追跡・再現可能、layout_check `PASS` |
 | Phase 7を`main`へ統合 | `0f20724`（`agent/task10-phase7-report`から`main`へfast-forward merge、User承認済み） |
-| Branch | `agent/task10-phase7-report`（`main`＝`f11be70`から新規作成、`main`が`0f20724`へfast-forward mergeされた時点で本branchと同一commitに合流） |
-| Current phase | Phase 0〜7 `Completed`（`main`へ統合・push済み）。Phase 8以降は未定義（本execution_plan.mdはPhase 7を完了Gateとして設計） |
+| Phase 8 evidence | `8b7a488`（検証済みDistilBERT fold metrics・OOF・execution manifest・Colab Notebook） |
+| Branch | `agent/task10-phase8-bert-comparison`（`main`＝`98fa4c9`から作成） |
+| Current phase | Phase 0〜7 `Completed`（`main`へ統合・push済み）。Phase 8はartifact検証・report/PDF統合・検査まで完了し、Git固定のみ未実施 |
 | Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`（Phase 0〜6）、`docs/management/daily_report_20260803.md`（セッション再開・状況確認、Phase 6統合、Phase 7実装・統合） |
-| Remote note | `main`は`0f20724`（Phase 7まで）まで統合済み。旧6branch（`agent/pdf-renderer-port`、`agent/task10-phase2-data-generation`、`agent/task10-phase3-model-foundation`、`agent/task10-phase5-explainability`、`agent/task10-phase6-extension`、`agent/task10-phase7-report`）は全て`main`の祖先であることを`git merge-base --is-ancestor`で確認済み。未統合branchなし |
+| Remote note | `origin/main`は`98fa4c9`（Phase 7＋第3/4章考察強化）。Phase 8 branchはlocalのみで1 commit先行し、要件正本・report統合差分は未commit |
 
 Coreテーマ:
 
@@ -29,6 +30,7 @@ Coreテーマ:
 本書はPhaseの目的、依存関係、主要作業、成果物、完了条件、移行Gateを管理する。詳細仕様は複製せず、次の実在する正本を参照する。
 
 - プロジェクト規約: `docs/management/project_rules.md`
+- 課題10要件原本: `docs/requirements/task10_assignment_requirements.md`
 - Architecture: `docs/architecture/task10_architecture.md`
 - 再利用判断: `docs/audits/task10_reuse_matrix.md`
 - 前処理契約: `docs/contracts/preprocessing_contract.md`
@@ -450,7 +452,8 @@ Coreで答えられない明確な問いだけを、Core成果物を変更せず
 
 - Expected: `Optional`
 - Actual: `Completed`
-- 承認済み（2026-07-31、User (Yuji Sunagawa)）: MinHashLSHのみを実施。BERT比較は非実施（`torch`のuv解決が60秒でtimeoutし大容量依存・Python 3.14互換未確認という実測リスクを提示した上でユーザーが選択）。実施理由: Rabiloo資料と`docs/contracts/data_quality_contract.md`が明示的にCore範囲外としたMinHashLSH近接重複センシティビティを検証する。計算予算: 新規サードパーティ依存なし（stdlib `hashlib`のみ）、Full 800件規模。停止条件: 依存導入が必要になった場合、または60秒程度で完了しない重い処理が必要になった場合は実装を止めて報告する。
+- 承認済み（2026-07-31、User (Yuji Sunagawa)）: MinHashLSHのみを実施。BERT比較は本リポジトリのuv環境では非実施（`torch`のuv解決が60秒でtimeoutし大容量依存・Python 3.14互換未確認という実測リスクを提示した上でユーザーが選択）。実施理由: Rabiloo資料と`docs/contracts/data_quality_contract.md`が明示的にCore範囲外としたMinHashLSH近接重複センシティビティを検証する。計算予算: 新規サードパーティ依存なし（stdlib `hashlib`のみ）、Full 800件規模。停止条件: 依存導入が必要になった場合、または60秒程度で完了しない重い処理が必要になった場合は実装を止めて報告する。
+- 追記（2026-08-03）: その後、User側でGoogle Colab（GPU環境）を用いてDistilBERT比較を外部実施した（本リポジトリのuv環境・torch依存を経由しないため、ここで提示した依存リスクとは無関係）。詳細・検証結果はPhase 8参照。
 - 完了: `src/mail_classification/extensions/`（Core `quality`/`evaluation`/`models`とは独立、Coreから一切importされない別package）へ`minhash.py`（`word_shingles`、`minhash_signature`、`lsh_candidate_pairs`、`exact_jaccard`、`find_near_duplicates`、`summarize_near_duplicates`）、`runner.py`（`run_and_write_minhash_extension`：出力先は`outputs/extensions/`、Core namespace `outputs/runs/`・`outputs/data_quality/`・`outputs/folds/`には一切書き込まない）を実装。サードパーティ依存追加なし（`uv.lock`不変）。
 - 実データ（Full 800件）で実行し、`outputs/extensions/phase6-minhash-seed42/`を生成。実測結果: 候補pair 2054件、全てCore（exact/normalized重複0件）が未検出のpair（`additional_beyond_core_exact_normalized: 2054`）。ただし**cross-label pairは0件、different-template-group pairも0件**——2054件は全てsame-label・same-template_groupの組であり、Phase 2が意図的に共有するcomponent pool（greeting/closing/signature/subject等）由来の近接重複と整合する。ラベル境界を跨ぐ近接重複は確認されず、Core結果へのリーク疑義は本Extensionの範囲では見つからなかった。
 
@@ -596,6 +599,9 @@ Phase 6 Extension [Completed:            Skip Extension [not chosen]
                           |
                           v
 Phase 7 Report / PDF / Finalization          [Completed]
+          |
+          v
+Phase 8 DistilBERT External Comparison       [In progress: validated, Git fixation pending]
 ```
 
 ## 5. 成果物一覧
@@ -610,6 +616,7 @@ Phase 7 Report / PDF / Finalization          [Completed]
 | 5 | Completed | Existing: `outputs/runs/phase5-explain-seed42/`（Fold/descriptive coefficients、misclassifications、error taxonomy） | Coreの説明性・誤分類分析確定 |
 | 6 | Completed | Existing: `outputs/extensions/phase6-minhash-seed42/`（MinHashLSH近接重複; BERTは承認済み非実施） | 選択Extension（MinHashLSH）完了、Core非上書き確認済み |
 | 7 | Completed | Existing tool: `tools/pdf_renderer/`; Existing: `outputs/reports/phase7-report-phase4-core-seed42/`（report.md/PDF/layout_check.json/manifest） | 同一runから再生成・要件照合・layout_check PASS |
+| 8 | In progress | Existing: verified Colab Notebook、fold metrics、OOF、execution manifest; artifact-driven report/PDF integration validated in working tree | 同一data/Fold確認、artifact集計、PDF再生成・layout検査は完了。Git固定・公開待ち |
 
 ## 6. Phase移行Gate一覧
 
@@ -621,6 +628,7 @@ Phase 7 Report / PDF / Finalization          [Completed]
 | Phase 5 → Phase 6 (実施可否判断) | Core評価・説明性・誤分類分析完了。Extension実施可否を明示判断 |
 | Phase 5 → Phase 7 | Extension非実施の場合。Core結果・説明性・誤分類分析が確定 |
 | Phase 6 → Phase 7 | 選択Extension完了、Core成果物を上書きしていない |
+| Phase 7 → Phase 8 (追加Extension) | 課題原文のBERT比較要件確認、外部artifactのdata/Fold/OOF整合検証 |
 
 ## 7. リスク管理
 
@@ -643,22 +651,23 @@ Phase 7 Report / PDF / Finalization          [Completed]
 
 ## 8. 大学課題要件との対応
 
-大学の課題10要件原本は今回確認対象の実ファイルに含まれていないため、下表は現プロジェクトとの予定対応であり、最終的な必須/任意判断はすべて要件原本で要確認とする。
+2026-08-03にユーザーから課題10の原文が提示され、追跡対象の正本を`docs/requirements/task10_assignment_requirements.md`へ保存した。以下は仮置きではなく、正式要件に対する実装・成果物の対応表である。
 
 | Requirement | Phase | Evidence / Output | Verification status |
 | --- | --- | --- | --- |
-| Text preprocessing | 1, 3, 4 | `src/mail_classification/preprocessing/`、D0〜D2 ablation結果 | 実装済み／要件原本で要確認 |
-| TF-IDF | 3, 4 | `src/mail_classification/models/factory.py`、Fold内fit | 実装済み／要件原本で要確認 |
-| Linear classifier | 3, 4 | LinearSVC、Logistic Regression | 実装済み／要件原本で要確認 |
-| Accuracy | 4 | `outputs/runs/phase4-core-seed42/metrics_summary.csv` | 実装済み／要件原本で要確認 |
-| Precision | 4 | `metrics_long.csv`（macro/classwise） | 実装済み／要件原本で要確認 |
-| Recall | 4 | `metrics_long.csv`（macro/classwise） | 実装済み／要件原本で要確認 |
-| F1 | 4 | `metrics_long.csv`（macro-F1、weighted/classwise F1） | 実装済み／要件原本で要確認 |
-| Error analysis | 5 | `misclassifications.csv`、`error_category_summary.csv` | 実装済み／要件原本で要確認 |
-| BERT comparison | 6 | 未実施（`torch`のuv解決timeoutを理由に、User承認のもとMinHashLSHのみへ絞った） | 実施しない判断で確定／要件原本で要確認 |
-| Python code | 1–7 | `src/mail_classification/`全package、`tests/`257件 | 実装済み／要件原本で要確認 |
-| Result files | 2, 4, 5, 6 | data-quality JSON/CSV/manifest、metrics/OOF/explanation/near-duplicates CSV | 実装済み／要件原本で要確認 |
-| PDF report | 7 | `outputs/reports/phase7-report-phase4-core-seed42/report.pdf`（layout_check PASS） | 実装済み／要件原本で要確認 |
+| Mail classification / sample data | 2–4 | 合成問い合わせメール800件、共通5-fold、6 Core cells | 実施済み |
+| Text preprocessing | 1, 3, 4 | `src/mail_classification/preprocessing/`、D0〜D2 ablation結果 | 実装・評価済み |
+| TF-IDF | 3, 4 | `src/mail_classification/models/factory.py`、Fold内fit | 実装・評価済み |
+| Classifier training | 3, 4 | LinearSVC、Logistic Regression | 実装・評価済み |
+| Accuracy | 4, 8 | CoreおよびDistilBERTのfold別／集約artifact | 評価済み |
+| Precision | 4, 8 | Coreのclasswise値、DistilBERTのmacro値 | 評価済み |
+| Recall | 4, 8 | Coreのclasswise値、DistilBERTのmacro値 | 評価済み |
+| F1-score | 4, 8 | Coreのmacro／weighted／classwise F1、DistilBERTのmacro-F1 | 評価済み |
+| Misclassification causes and improvements | 5, 7 | `misclassifications.csv`、`error_category_summary.csv`、report第4章 | 分析・考察済み |
+| BERT comparison | 8 | `outputs/runs/phase8-bert-seed42/`のfold metrics、OOF、manifest、Colab Notebook、report第8章 | DistilBERTで実施・独立検証・report統合済み |
+| Python source code | 1–8 | `src/mail_classification/`、`scripts/`、Phase 8 Notebook | 実装済み |
+| Execution results | 2, 4, 5, 6, 8 | data-quality、metrics、OOF、explanation、near-duplicates、BERT CSV／JSON | 保存・検証済み |
+| PDF report | 7, 8 | `outputs/reports/phase7-report-phase4-core-seed42/report.pdf` | Phase 8比較を含めて再生成済み。layout_check `PASS`（11ページ、violations 0件） |
 
 ## 9. 実行上の原則
 
@@ -677,7 +686,6 @@ Phase 7 Report / PDF / Finalization          [Completed]
 
 ### 未確認事項
 
-- 大学課題10の要件原本。特にBERT比較の必須/任意、提出形式、評価指標の指定。本書・レポート第1章とも「要件原本で要確認」の留保を維持したまま全Phaseを完了している。
 - Mermaidは現PDF基盤で未検証のため、本書では使用していない。
 - `structural_content`カテゴリの誤分類比率が母集団比率（header/signature/quoted reply存在率）を実際に超過しているかは、Phase 5でも「頻度が高い」以上の因果検証を行っておらず未検証のまま。
 
@@ -692,4 +700,5 @@ Phase 7 Report / PDF / Finalization          [Completed]
 7. 完了: Phase 5（説明性・誤分類分析）を実データで実行し、`outputs/runs/phase5-explain-seed42/`へ係数・誤分類・error taxonomyを保存した（commit `b2f76de`）。
 8. 完了: Phase 6 Extension（MinHashLSHのみ、User承認）を実データで実行し、`outputs/extensions/phase6-minhash-seed42/`へ近接重複結果を保存した（commit `9da0449`）。
 9. 完了: Phase 7 レポート生成モジュール・`scripts/build_report.py`を実装し、実データから`outputs/reports/phase7-report-phase4-core-seed42/`（report.md/PDF/layout_check.json/manifest）を生成、layout_check `PASS`を確認した（commit `0c6ce96`）。README.mdをPhase 0〜7の現状と実行可能な再現手順へ全面更新した（commit `3074a1d`）。
-10. 次: 最終検証ゲート（pytest／`uv lock --check`／`git diff --check`／機密情報混入チェック）を実施し、`agent/task10-phase7-report`を`main`へfast-forward mergeしてpushする。
+10. 完了: Phase 7最終検証と`main`へのfast-forward merge・pushを実施した。第3/4章の追加考察も`98fa4c9`で`main`へ反映済み。
+11. 完了（working tree）: Phase 8 DistilBERT artifactを独立検証し`8b7a488`へ固定。検証済みfold平均macro-F1は`0.753`で、Accuracy／macro Precision／macro Recall／macro-F1をreport生成元・PDFへartifact駆動で統合した。PDFはlayout_check `PASS`（11ページ、violations 0件）、全268 tests成功。要件正本・report統合差分のcommit/pushは未実施。

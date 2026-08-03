@@ -5,10 +5,16 @@ mail classification using TF-IDF + linear classifiers. All mail records are
 synthetic; no Rabiloo internal mail, customer data, or other confidential
 source is used.
 
-Current status: Phase 0 through Phase 7 are complete (see
+Current status: Phase 0 through Phase 7 are complete. Phase 8's DistilBERT
+evidence verification and artifact-driven report/PDF integration are complete
+in the current working tree; Git fixation is pending (see
 `docs/management/execution_plan.md` for the authoritative per-phase status,
 evidence, and commit hashes; `docs/management/daily_report_*.md` for the
 session-by-session work log).
+
+The confirmed university assignment wording is preserved in
+`docs/requirements/task10_assignment_requirements.md`. Phase 8 adds the
+evidence-checked Google Colab DistilBERT comparison required by that wording.
 
 Project rules are defined in `docs/management/project_rules.md`. Everything
 under `outputs/` and the generated files under `data/raw/` are reproducible
@@ -98,9 +104,9 @@ smaller Smoke/Pilot stages that preceded Full generation, if needed.
 - `tools/pdf_renderer/`: standalone Markdown -> HTML -> PDF tool (ported from
   Task 9), independent of the experiment code.
 - `docs/management/`: execution plan, project rules, daily reports.
-- `docs/architecture/`, `docs/contracts/`, `docs/schemas/`, `docs/audits/`,
+- `docs/requirements/`, `docs/architecture/`, `docs/contracts/`, `docs/schemas/`, `docs/audits/`,
   `docs/reviews/`: design docs, data/model contracts, schema specs, prior-task
-  audits, and tracked human-review approval evidence.
+  requirements, audits, and tracked review approval evidence.
 - `outputs/`: generated artifacts (Fold assignments, Core/Explain/Extension
   runs, the final report). All gitignored and reproducible from the commands
   above.

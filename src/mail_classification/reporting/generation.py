@@ -35,6 +35,7 @@ _PDF_RENDERER_CSS_PATH = (
 DEFAULT_CORE_RUN_ID = "phase4-core-seed42"
 DEFAULT_EXPLAIN_RUN_ID = "phase5-explain-seed42"
 DEFAULT_EXTENSION_RUN_ID = "phase6-minhash-seed42"
+DEFAULT_BERT_RUN_ID = "phase8-bert-seed42"
 DEFAULT_QUALITY_SUMMARY_RELATIVE = Path("outputs") / "data_quality" / "full_summary.json"
 
 
@@ -68,13 +69,77 @@ def verify_selected_runs_consistent(
     return manifests
 
 
+def _bert_limitation_bullet(bert_run_dir: Path | None) -> str:
+    if bert_run_dir is None:
+        return (
+            "- BERT比較は未実施（`torch`のuv解決が60秒でtimeoutし大容量依存・Python 3.14互換未確認"
+            "という実測リスクを理由に、User (Yuji Sunagawa) 承認のもとMinHashLSHのみへ絞った）。"
+        )
+    return (
+        "- BERT比較（第8章）はGoogle Colab GPU環境での外部実験であり、本リポジトリの`uv run`では"
+        f"再現できない（証跡は`outputs/runs/{bert_run_dir.name}/`のfold別metrics・OOF予測・"
+        "実行manifest・notebookに保存）。実行環境・パッケージ版数が本リポジトリ（Python 3.14.4、"
+        "torch非導入）と異なるため、本リポジトリ内での再実行による厳密な再現性は保証されない。"
+    )
+
+
+def _build_bert_chapter(
+    core_dir: Path, bert_run_dir: Path, data_hash: str, fold_artifact_path: Path
+) -> str:
+    tables.verify_bert_alignment(bert_run_dir, fold_artifact_path, data_hash)
+
+    bert_manifest = json.loads((bert_run_dir / "execution_manifest.json").read_text(encoding="utf-8"))
+    model_config = bert_manifest["model_config"]
+    environment = bert_manifest["environment"]
+
+    comparison_table = tables.build_bert_comparison_table(core_dir, bert_run_dir)
+    required_metrics_table = tables.build_bert_required_metrics_table(core_dir, bert_run_dir)
+    bert_mean, bert_std, bert_n_folds = tables.read_bert_fold_metric_cv(bert_run_dir, "f1_score")
+    best_condition, best_model, best_mean = tables.best_core_metric_cell(core_dir, "macro_f1")
+
+    return f"""
+## 第8章 Extension: DistilBERTとの性能比較（外部実験）
+
+Phase 7完了後、追加のExtensionとしてDistilBERT（`{model_config["model_name"]}`）のfine-tuningを、Coreと同一のFull dataset・共通Foldで比較した。本実験はGoogle Colab（GPU環境）上で外部実施されたものであり、このリポジトリのCore/Extensionパイプラインには含まれない。Phase 6ではBERT比較を「`torch`のuv解決timeoutリスク」を理由に非実施と決定していたが、Colab上の別環境で実施することでこのリスクを回避し、User側で追加実施された（Phase 6・Phase 8のstatus参照）。
+
+**実験条件の同一性（検証済み）**:
+
+- Full dataset: `data_hash` = `{data_hash}`（Core実験と同一。`execution_manifest.json`の`actual_data_hash`と一致することを確認済み）
+- 共通Fold: `outputs/folds/common_folds.json`のvalidation fold割当と800件全て一致（`sample_id`単位で1件も不一致なし。Core・説明性分析と全く同じ5-fold splitを使用）
+- Model設定: epochs={model_config["epochs"]}、batch_size={model_config["batch_size"]}、learning_rate={model_config["learning_rate"]}、max_length={model_config["max_length"]}、random_seed={model_config["random_seed"]}
+- 実行環境: transformers {environment["transformers_version"]}、torch {environment["torch_version"]}、python {environment["python_version"]}、device={environment["device"]}（本リポジトリのPython 3.14.4／CPU環境とは別のColab GPU環境であり、本リポジトリの`uv run`では再現できない）
+
+**課題指定4指標の比較（5-foldの単純平均）**:
+
+{required_metrics_table}
+
+**macro-F1（cv_mean ± cv_std、Core全6セルとの比較）**:
+
+{comparison_table}
+
+DistilBERTのmacro-F1（cv_mean、fold別`f1_score`の単純平均、Coreの`cv_mean`と同じ集計方法）は{bert_mean:.3f}（cv_std {bert_std:.3f}、n_folds={bert_n_folds}）であり、Core最良条件（{best_condition}／{best_model}、{best_mean:.3f}）を上回った。
+
+**考察: 文脈理解による精度向上のメカニズム（仮説）**:
+
+- TF-IDF＋線形モデルは語の出現有無のみを特徴とし、語順・文脈依存の意味を直接モデル化しない（第4章参照）。DistilBERTはself-attention機構により文中の語同士の関係性（否定のスコープ、修飾関係、文全体の意味）を考慮した文脈依存の表現を学習するため、第4章で指摘した`multi_intent`（複数意図が混在するmail）や、強い語の存在だけでは判定できない誤分類パターンに対して、より頑健である可能性がある。
+- 事前学習によって獲得された一般的な言語知識（subword tokenization、語彙の意味的類似性）も、purely頻度ベースのTF-IDF表現では得られない情報である。
+- 本実験はseed 1点・5-fold CVのみでの比較であり、統計的有意差検定は行っていない（`docs/management/project_rules.md`の方針により、CV foldを独立標本とみなす単純な有意差検定は実施しない）。また、DistilBERTは事前学習済みの大規模言語モデルであり、Coreの線形モデルとは学習パラメータ数・計算コスト（GPU使用、fold当たり数分規模の学習時間）が大きく異なる。速度・解釈性・インフラコストとのトレードオフを踏まえた総合評価は本レポートの範囲外とする。
+"""
+
+
 def build_report_markdown(
     manifests: dict[str, dict],
     core_dir: Path,
     explain_dir: Path,
     extension_dir: Path,
     quality_summary_path: Path,
+    *,
+    bert_run_dir: Path | None = None,
+    fold_artifact_path: Path | None = None,
 ) -> str:
+    if bert_run_dir is not None and fold_artifact_path is None:
+        raise ValueError("fold_artifact_path is required when bert_run_dir is given")
+
     quality_summary = json.loads(quality_summary_path.read_text(encoding="utf-8"))
 
     macro_f1_table = tables.build_metric_summary_table(core_dir, "macro_f1")
@@ -99,9 +164,21 @@ def build_report_markdown(
     d2_diff_svc = tables.read_paired_diff_mean(core_dir, "D2", "linear_svc")
     d2_diff_lr = tables.read_paired_diff_mean(core_dir, "D2", "logistic_regression")
 
+    limitations_chapter_number = 9 if bert_run_dir is not None else 8
+    bert_requirement_row = (
+        f"| BERT comparison | 8 | `outputs/runs/{bert_run_dir.name}/`、第8章 | 実施・独立検証済み（Google Colab外部実験） |"
+        if bert_run_dir is not None
+        else "| BERT comparison | 8 | 第8章参照 | artifact未選択のため本buildには未収録 |"
+    )
+    bert_evidence_intro = (
+        f"、`outputs/runs/{bert_run_dir.name}/`（DistilBERT外部実験）"
+        if bert_run_dir is not None
+        else ""
+    )
+
     return f"""# 課題10 レポート: 英語問い合わせメールのTF-IDF＋線形分類
 
-本レポートは`outputs/runs/{core_run_id}/`（Core）、`outputs/runs/{explain_run_id}/`（説明性・誤分類分析）、`outputs/extensions/{extension_run_id}/`（Extension: MinHashLSH）に保存済みの機械可読artifactのみから生成する。手動転記した数値は含まない。
+本レポートは`outputs/runs/{core_run_id}/`（Core）、`outputs/runs/{explain_run_id}/`（説明性・誤分類分析）、`outputs/extensions/{extension_run_id}/`（Extension: MinHashLSH）{bert_evidence_intro}に保存済みの機械可読artifactのみから生成する。手動転記した数値は含まない。
 
 - 対象data hash: `{data_hash}`
 - 共通Fold artifact hash: `{fold_hash}`
@@ -109,19 +186,21 @@ def build_report_markdown(
 
 ## 第1章 大学課題要件との対応
 
-課題10の要件原本ファイルは本監査時点でリポジトリ内に確認できなかったため、以下は現在の実装状況に基づく対応表であり、必須／任意の最終判断は要件原本の確認を要する。
+課題10の要件原文は2026-08-03にユーザー提示で正式確認し、追跡対象の正本を`docs/requirements/task10_assignment_requirements.md`へ保存した。以下は仮置きではなく、メール分類、テキスト前処理、TF-IDF、分類器学習、4指標、誤分類・改善策、BERTとの差異、および提出物に対する正式な対応表である。
 
 | Requirement | Phase | Evidence | Implementation status |
 | --- | --- | --- | --- |
+| Mail classification / sample data | 2–4 | 合成問い合わせメール800件、共通5-fold | 実施済み |
 | Text preprocessing | 1, 3, 4 | `src/mail_classification/preprocessing/`、D0〜D2 ablation | 実装済み |
 | TF-IDF | 3, 4 | `src/mail_classification/models/factory.py`、Fold内fit | 実装済み |
 | Linear classifier | 3, 4 | LinearSVC、Logistic Regression | 実装済み |
 | Accuracy | 4 | `metrics_summary.csv` | 実装済み（第3章） |
 | Precision / Recall / F1 | 4 | `metrics_long.csv`（macro／weighted／classwise） | 実装済み |
 | Error analysis | 5 | `misclassifications.csv`、`error_category_summary.csv` | 実装済み（第4章） |
-| BERT comparison | 6 | 第8章参照 | 未実施（承認済みの判断） |
-| Result files | 2, 4, 5, 6 | `outputs/`配下のCSV／JSON | 実装済み |
-| PDF report | 7 | 本文書 | 本Phaseで生成 |
+{bert_requirement_row}
+| Python source code | 1–8 | `src/`、`scripts/`、Colab Notebook | 実装済み |
+| Execution results | 2, 4, 5, 6, 8 | `outputs/`配下のCSV／JSON／Notebook | 保存・検証済み |
+| PDF report | 7, 8 | 本文書 | artifactから自動生成 |
 
 ## 第2章 データ概要と合成データの限界
 
@@ -201,12 +280,11 @@ fold間標準偏差は0.08〜0.13と大きい。これはlabelあたりのtempla
 6. `mail_classification.extensions.runner.run_and_write_minhash_extension`でExtension（run_id=`{extension_run_id}`）を再実行する。
 7. `scripts/build_report.py`で本レポート（Markdown → HTML → PDF、layout check付き）を再生成する。
 
-全stepはseed固定・Fold artifact hash・data hashで決定的に再現可能である。
+全stepはseed固定・Fold artifact hash・data hashで決定的に再現可能である。BERT比較（第8章）はGoogle Colab GPU環境での外部実験であり、本リポジトリの`uv run`では再現できない（証跡は`outputs/runs/{bert_run_dir.name if bert_run_dir is not None else "phase8-bert-seed42"}/`に保存）。
+{_build_bert_chapter(core_dir, bert_run_dir, data_hash, fold_artifact_path) if bert_run_dir is not None else ""}
+## 第{limitations_chapter_number}章 既知の限界・未実施事項
 
-## 第8章 既知の限界・未実施事項
-
-- 課題10要件原本が本監査時点で確認できず、必須／任意の最終判断は要件原本確認後に要修正。
-- BERT比較は未実施（`torch`のuv解決が60秒でtimeoutし大容量依存・Python 3.14互換未確認という実測リスクを理由に、User (Yuji Sunagawa) 承認のもとMinHashLSHのみへ絞った）。
+{_bert_limitation_bullet(bert_run_dir)}
 - `TfidfVectorizer`は`stop_words`未設定であり、一般的な機能語が上位寄与特徴に頻出する。D0〜D2は承認済みの固定specであり本Phaseでは変更していない。
 - fold sizeの不均衡（第3章参照）。
 - `structural_content`カテゴリの母集団比率超過は未検証（第4章参照）。
@@ -231,11 +309,16 @@ def write_report(
     core_run_id: str = DEFAULT_CORE_RUN_ID,
     explain_run_id: str = DEFAULT_EXPLAIN_RUN_ID,
     extension_run_id: str = DEFAULT_EXTENSION_RUN_ID,
+    bert_run_id: str | None = None,
     quality_summary_path: str | Path | None = None,
 ) -> ReportBuildResult:
     """Build report.md + figures, then HTML -> PDF -> layout check, all under
     ``outputs/reports/<run_id>/``. Raises if the selected runs disagree on
-    data_hash/fold_artifact_hash (see verify_selected_runs_consistent)."""
+    data_hash/fold_artifact_hash (see verify_selected_runs_consistent).
+
+    bert_run_id is optional: pass it (e.g. DEFAULT_BERT_RUN_ID) to include the
+    external DistilBERT comparison chapter; omit it to build the Core-only
+    report unchanged."""
     project_root = Path(project_root).resolve()
     resolved_quality_summary_path = (
         Path(quality_summary_path)
@@ -249,6 +332,8 @@ def write_report(
     core_dir = project_root / "outputs" / "runs" / core_run_id
     explain_dir = project_root / "outputs" / "runs" / explain_run_id
     extension_dir = project_root / "outputs" / "extensions" / extension_run_id
+    bert_dir = project_root / "outputs" / "runs" / bert_run_id if bert_run_id is not None else None
+    fold_artifact_path = project_root / "outputs" / "folds" / "common_folds.json"
 
     resolved_run_id = run_id or f"phase7-report-{core_run_id}"
     report_dir = project_root / "outputs" / "reports" / resolved_run_id
@@ -260,7 +345,13 @@ def write_report(
     )
 
     markdown_text = build_report_markdown(
-        manifests, core_dir, explain_dir, extension_dir, resolved_quality_summary_path
+        manifests,
+        core_dir,
+        explain_dir,
+        extension_dir,
+        resolved_quality_summary_path,
+        bert_run_dir=bert_dir,
+        fold_artifact_path=fold_artifact_path,
     )
     markdown_path = report_dir / "report.md"
     markdown_path.write_text(markdown_text, encoding="utf-8")
@@ -282,7 +373,13 @@ def write_report(
         created_at=datetime.now(timezone.utc),
         git_commit=_git_value(project_root, "rev-parse", "HEAD"),
         git_dirty=_git_dirty(project_root),
-        command=["build_report", core_run_id, explain_run_id, extension_run_id],
+        command=[
+            "build_report",
+            core_run_id,
+            explain_run_id,
+            extension_run_id,
+            *([bert_run_id] if bert_run_id is not None else []),
+        ],
         python_version=platform.python_version(),
         platform=platform.platform(),
         dependency_versions={

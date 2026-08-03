@@ -12,6 +12,8 @@
 
 矛盾は上位を優先し、勝手に補完せず、日報・監査文書・TODOのいずれかへ記録する。
 
+課題10要件の追跡対象正本は`docs/requirements/task10_assignment_requirements.md`とする。
+
 ## 2. ディレクトリ配置
 
 最終責務は`docs/architecture/task10_architecture.md`の推奨構成に従う。

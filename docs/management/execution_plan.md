@@ -3,7 +3,7 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-08-03T11:02:09+07:00` |
+| Last verified | `2026-08-03T11:18:36+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
@@ -13,8 +13,8 @@
 | Phase 5を`main`へ統合 | `c1e8d10`（`agent/task10-phase5-explainability`から`main`へfast-forward merge、push済み） |
 | Phase 6 implementation | `9da0449`（MinHashLSH近接重複センシティビティ、実データ実行結果`outputs/extensions/phase6-minhash-seed42/`はGit非追跡・再現可能） |
 | Phase 6を`main`へ統合 | `2668a06`（`agent/task10-phase6-extension`から`main`へfast-forward merge、User承認済み） |
-| Branch | `agent/task10-phase6-extension`（`main`＝`c1e8d10`から新規作成、`main`が`2668a06`へfast-forward mergeされた時点で本branchと同一commitに合流） |
-| Current phase | Phase 2〜6 `Completed`（`main`へ統合・push済み）。Phase 7は未着手 |
+| Branch | `agent/task10-phase7-report`（`main`＝`f11be70`から新規作成） |
+| Current phase | Phase 2〜6 `Completed`（`main`へ統合・push済み）。Phase 7 `In Progress`（本branchで着手） |
 | Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`（Phase 0〜6）、`docs/management/daily_report_20260803.md`（セッション再開・状況確認、Phase 6統合） |
 | Remote note | `main`は`2668a06`（Phase 6まで）まで統合済み。旧5branch（`agent/pdf-renderer-port`、`agent/task10-phase2-data-generation`、`agent/task10-phase3-model-foundation`、`agent/task10-phase5-explainability`、`agent/task10-phase6-extension`）は全て`main`の祖先であることを`git merge-base --is-ancestor`で確認済み。未統合branchなし |
 
@@ -500,8 +500,9 @@ Coreで答えられない明確な問いだけを、Core成果物を変更せず
 **Status（現在の状態／Expected vs Actual）**
 
 - Expected: `Planned`
-- Actual: `Planned`
-- `tools/pdf_renderer/`の移植・単体PDF smokeは実在するが、課題10最終report本文・図表・世代検査・最終PDFは未作成。
+- Actual: `In Progress`
+- `tools/pdf_renderer/`の移植・単体PDF smokeは実在し、本Phaseで`google-chrome`/`pdftoppm`実在環境での動作を再確認済み。課題10最終report本文・図表・世代検査・最終PDFはこれから実装する。
+- 出力先はアーキテクチャ推奨案（`reports/`, `artifacts/`, `tmp/`という新規top-levelディレクトリ）ではなく、Phase 2〜6で確立した`outputs/<category>/`規約に合わせ`outputs/reports/<run_id>/`とする（`task10_architecture.md`冒頭に明記の通りディレクトリ構成は「推奨」であり指示ではないため）。
 
 **Prerequisites（前提条件）**
 

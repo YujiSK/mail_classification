@@ -347,3 +347,25 @@ def test_build_report_with_real_fold_imbalance_and_structural_ratio_chapters(
 
     check_result = json.loads(result.layout_check_path.read_text(encoding="utf-8"))
     assert check_result["status"] != "FAIL"
+
+
+def test_render_report_pdf_reflects_hand_edited_markdown_verbatim(tmp_path: Path) -> None:
+    """render_report_pdf must never regenerate/overwrite report.md content;
+    it only converts whatever text is already on disk."""
+    report_dir = tmp_path / "outputs" / "reports" / "manual-edit-smoke"
+    report_dir.mkdir(parents=True)
+    markdown_path = report_dir / "report.md"
+    markdown_path.write_text(
+        "# Hand-edited title\n\nThis paragraph was typed by hand, not generated.\n",
+        encoding="utf-8",
+    )
+
+    html_path, registry_path, pdf_path, layout_check_path = generation.render_report_pdf(
+        markdown_path, report_dir
+    )
+
+    assert markdown_path.read_text(encoding="utf-8").startswith("# Hand-edited title")
+    assert "Hand-edited title" in html_path.read_text(encoding="utf-8")
+    assert pdf_path.is_file()
+    check_result = json.loads(layout_check_path.read_text(encoding="utf-8"))
+    assert check_result["status"] != "FAIL"

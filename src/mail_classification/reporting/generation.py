@@ -334,6 +334,26 @@ class ReportBuildResult:
     manifest_path: Path
 
 
+def render_report_pdf(markdown_path: Path, report_dir: Path) -> tuple[Path, Path, Path, Path]:
+    """HTML -> PDF -> layout check from an already-written report.md, without
+    regenerating its content. Used by write_report for a freshly-generated
+    markdown file, and reusable standalone (see scripts/render_report_pdf.py)
+    to re-render a hand-edited report.md as-is."""
+    build_dir = report_dir / "_build"
+    html_path, registry_path = report_builder.build(
+        md_path=markdown_path, css_path=_PDF_RENDERER_CSS_PATH, build_dir=build_dir
+    )
+
+    pdf_path = report_dir / "report.pdf"
+    pdf_renderer.render_html_to_pdf(html_path=html_path, pdf_path=pdf_path, document_root=report_dir)
+
+    check_result = layout_checker.run_checks(pdf_path, registry_path)
+    layout_check_path = report_dir / "layout_check.json"
+    write_json(layout_check_path, check_result)
+
+    return html_path, registry_path, pdf_path, layout_check_path
+
+
 def write_report(
     project_root: str | Path,
     *,
@@ -410,17 +430,9 @@ def write_report(
     markdown_path = report_dir / "report.md"
     markdown_path.write_text(markdown_text, encoding="utf-8")
 
-    build_dir = report_dir / "_build"
-    html_path, registry_path = report_builder.build(
-        md_path=markdown_path, css_path=_PDF_RENDERER_CSS_PATH, build_dir=build_dir
+    html_path, registry_path, pdf_path, layout_check_path = render_report_pdf(
+        markdown_path, report_dir
     )
-
-    pdf_path = report_dir / "report.pdf"
-    pdf_renderer.render_html_to_pdf(html_path=html_path, pdf_path=pdf_path, document_root=report_dir)
-
-    check_result = layout_checker.run_checks(pdf_path, registry_path)
-    layout_check_path = report_dir / "layout_check.json"
-    write_json(layout_check_path, check_result)
 
     manifest = RunManifest(
         run_id=resolved_run_id,

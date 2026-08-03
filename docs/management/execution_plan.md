@@ -3,7 +3,7 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-08-03T11:18:36+07:00` |
+| Last verified | `2026-08-03T11:46:26+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
@@ -13,10 +13,11 @@
 | Phase 5を`main`へ統合 | `c1e8d10`（`agent/task10-phase5-explainability`から`main`へfast-forward merge、push済み） |
 | Phase 6 implementation | `9da0449`（MinHashLSH近接重複センシティビティ、実データ実行結果`outputs/extensions/phase6-minhash-seed42/`はGit非追跡・再現可能） |
 | Phase 6を`main`へ統合 | `2668a06`（`agent/task10-phase6-extension`から`main`へfast-forward merge、User承認済み） |
+| Phase 7 implementation | `0c6ce96`（reporting module・`scripts/build_report.py`）、`3074a1d`（README全面更新）。実データ実行結果`outputs/reports/phase7-report-phase4-core-seed42/`はGit非追跡・再現可能、layout_check `PASS` |
 | Branch | `agent/task10-phase7-report`（`main`＝`f11be70`から新規作成） |
-| Current phase | Phase 2〜6 `Completed`（`main`へ統合・push済み）。Phase 7 `In Progress`（本branchで着手） |
-| Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`（Phase 0〜6）、`docs/management/daily_report_20260803.md`（セッション再開・状況確認、Phase 6統合） |
-| Remote note | `main`は`2668a06`（Phase 6まで）まで統合済み。旧5branch（`agent/pdf-renderer-port`、`agent/task10-phase2-data-generation`、`agent/task10-phase3-model-foundation`、`agent/task10-phase5-explainability`、`agent/task10-phase6-extension`）は全て`main`の祖先であることを`git merge-base --is-ancestor`で確認済み。未統合branchなし |
+| Current phase | Phase 2〜6 `Completed`（`main`へ統合・push済み）。Phase 7 `Completed`（本branch、`main`統合待ち） |
+| Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`（Phase 0〜6）、`docs/management/daily_report_20260803.md`（セッション再開・状況確認、Phase 6統合、Phase 7実装） |
+| Remote note | `main`は`2668a06`（Phase 6まで）まで統合済み。`agent/task10-phase7-report`は`main`未統合（最終検証ゲート後にfast-forward merge予定） |
 
 Coreテーマ:
 
@@ -500,9 +501,12 @@ Coreで答えられない明確な問いだけを、Core成果物を変更せず
 **Status（現在の状態／Expected vs Actual）**
 
 - Expected: `Planned`
-- Actual: `In Progress`
-- `tools/pdf_renderer/`の移植・単体PDF smokeは実在し、本Phaseで`google-chrome`/`pdftoppm`実在環境での動作を再確認済み。課題10最終report本文・図表・世代検査・最終PDFはこれから実装する。
-- 出力先はアーキテクチャ推奨案（`reports/`, `artifacts/`, `tmp/`という新規top-levelディレクトリ）ではなく、Phase 2〜6で確立した`outputs/<category>/`規約に合わせ`outputs/reports/<run_id>/`とする（`task10_architecture.md`冒頭に明記の通りディレクトリ構成は「推奨」であり指示ではないため）。
+- Actual: `Completed`
+- 完了: `src/mail_classification/reporting/`（`tables.py`：CSV/JSON artifactからMarkdown表を生成、`figures.py`：新規plotting依存を追加せずstdlib文字列組み立てのみでSVG bar chartを生成、`generation.py`：Core/説明性/Extensionの3 run manifest間でdata_hash/fold_artifact_hashの整合をfail-fastで検証し、report.mdを組み立て、`tools.pdf_renderer.reporting`でHTML→PDF→layout checkまで実行）と`scripts/build_report.py`を実装した。
+- 出力先はアーキテクチャ推奨案（`reports/`, `artifacts/`, `tmp/`という新規top-levelディレクトリ）ではなく、Phase 2〜6で確立した`outputs/<category>/`規約に合わせ`outputs/reports/<run_id>/`とした（`task10_architecture.md`冒頭に明記の通りディレクトリ構成は「推奨」であり指示ではないため）。
+- 実データ（Full 800件、Phase 4/5/6の実run）で`scripts/build_report.py`を実行し、`outputs/reports/phase7-report-phase4-core-seed42/`へ`report.md`（全8章：大学要件対応／データ概要／Core結果／説明性・誤分類分析／Extension／リーク監査まとめ／再現手順／既知の限界）、`report.pdf`（9ページ）、`layout_check.json`（`status: PASS`、violations 0件）、`manifest.json`を生成した。PDFをpage画像化して目視確認し、表・SVG図・見出しの描画に異常がないことを確認した。
+- `README.md`を全面更新し、記載した再現コマンド（Full生成／Core／説明性／Extension／レポート生成の4 step）を実データに対して実行して動作確認した。共通Fold artifactの`fold_artifact_hash`はFoldMetadataの実時刻`created_at`を含むため再生成毎に変わる一方、`metrics_summary.csv`のSHA-256は完全一致し、fold割当・実験結果自体はseed 42で厳密に再現されることを実測確認した。
+- 既知のscope限定: `tools/pdf_renderer/reporting/layout_pipeline.py`のmanual/generated override設定システム（`configs/layout_overrides.yml`、auto-repair）は本Phaseでは配線していない——layout_check違反が実測0件だったため未使用のまま。将来layout違反が出た場合はopt-in repairの導入を要検討。
 
 **Prerequisites（前提条件）**
 
@@ -518,8 +522,9 @@ Coreで答えられない明確な問いだけを、Core成果物を変更せず
 
 **Main outputs（主な成果物）**
 
-- Planned: report Markdown、generated tables/figures
-- Planned: final PDF、layout/content check JSON、selected-run generation manifest
+- Completed: `outputs/reports/phase7-report-phase4-core-seed42/report.md`（generated tables + SVG figure）
+- Completed: `outputs/reports/phase7-report-phase4-core-seed42/report.pdf`、`layout_check.json`（`status: PASS`）、`manifest.json`
+- Completed: `src/mail_classification/reporting/`（`tables.py`、`figures.py`、`generation.py`）、`scripts/build_report.py`
 - Existing reusable tool: `tools/pdf_renderer/`
 
 **Validation（検証方法）**
@@ -572,23 +577,24 @@ Phase 2B Human Review                        [Approved]
 Phase 2C Full Generation + Final Data QA     [Completed / Approved]
           |
           v
-Phase 3 Dependencies + Common Folds + Models [Ready; not started]
+Phase 3 Dependencies + Common Folds + Models [Completed]
           |
           v
-Phase 4 Core Ablation / Multiclass CV        [Planned]
+Phase 4 Core Ablation / Multiclass CV        [Completed]
           |
           v
-Phase 5 Explainability / Error Analysis      [Planned]
+Phase 5 Explainability / Error Analysis      [Completed]
           |
           +-------------------------------+
           |                               |
           v                               v
-Phase 6 Extension [Optional]       Skip Extension [Decision recorded]
+Phase 6 Extension [Completed:            Skip Extension [not chosen]
+ MinHashLSH only]                              |
           |                               |
           +---------------+---------------+
                           |
                           v
-Phase 7 Report / PDF / Finalization          [Planned]
+Phase 7 Report / PDF / Finalization          [Completed]
 ```
 
 ## 5. 成果物一覧
@@ -598,11 +604,11 @@ Phase 7 Report / PDF / Finalization          [Planned]
 | 0 | Completed | Existing: inventory, audit, reuse matrix, architecture, rules | 根拠付き監査と設計承認 |
 | 1 | Completed | Existing: `pyproject.toml`, `uv.lock`, schemas, preprocessing, contracts, tests | Phase 1 tests・lock・diff成功、固定commit公開 |
 | 2 | Completed | Existing: generator/quality code, config/templates, reviewed Smoke/Pilot/Full, summaries/reports/manifests and tracked approvals | Human review完了＋Full品質・hash固定 |
-| 3 | Ready | Planned: sklearn lock、common Fold artifact、minimal LinearSVC/LR Pipelines | dependency/Fold/Pipeline検証成功 |
-| 4 | Planned | Planned: Fold Long、summary、OOF、confusion、paired differences、timing/vocabulary | 全Core完走、OOF coverage完全 |
-| 5 | Planned | Planned: class/Fold coefficients、misclassification artifacts、error taxonomy | Coreの説明性・誤分類分析確定 |
-| 6 | Optional | Planned only if approved: MinHashLSH/BERT等の別run | 選択Extension完了または非実施判断 |
-| 7 | Planned | Existing tool: `tools/pdf_renderer/`; Planned: report、figures、PDF、checks | 同一runから再生成・要件照合・提出承認 |
+| 3 | Completed | Existing: sklearn lock、common Fold artifact（`outputs/folds/common_folds.json`）、TF-IDF/LinearSVC/LR factory、承認済みD0〜D2条件 | dependency/Fold/Pipeline検証成功 |
+| 4 | Completed | Existing: `outputs/runs/phase4-core-seed42/`（metrics_long/summary、OOF、confusion、paired differences、manifest） | 全Core完走、OOF coverage完全 |
+| 5 | Completed | Existing: `outputs/runs/phase5-explain-seed42/`（Fold/descriptive coefficients、misclassifications、error taxonomy） | Coreの説明性・誤分類分析確定 |
+| 6 | Completed | Existing: `outputs/extensions/phase6-minhash-seed42/`（MinHashLSH近接重複; BERTは承認済み非実施） | 選択Extension（MinHashLSH）完了、Core非上書き確認済み |
+| 7 | Completed | Existing tool: `tools/pdf_renderer/`; Existing: `outputs/reports/phase7-report-phase4-core-seed42/`（report.md/PDF/layout_check.json/manifest） | 同一runから再生成・要件照合・layout_check PASS |
 
 ## 6. Phase移行Gate一覧
 
@@ -640,18 +646,18 @@ Phase 7 Report / PDF / Finalization          [Planned]
 
 | Requirement | Phase | Evidence / Output | Verification status |
 | --- | --- | --- | --- |
-| Text preprocessing | 1, 4 | Existing: 3層interface、contract、tests; Planned: ablation results | 基盤実装済み／要件原本で要確認 |
-| TF-IDF | 3, 4 | Planned: Pipeline component、Fold vocabulary | 未実装／要件原本で要確認 |
-| Linear classifier | 3, 4 | Planned: LinearSVC、Logistic Regression | 未実装／要件原本で要確認 |
-| Accuracy | 4 | Planned: Fold Long/summary | 未実装／要件原本で要確認 |
-| Precision | 4 | Planned: macro/classwise results | 未実装／要件原本で要確認 |
-| Recall | 4 | Planned: macro/classwise results | 未実装／要件原本で要確認 |
-| F1 | 4 | Planned: macro-F1、weighted/classwise F1 | 未実装／要件原本で要確認 |
-| Error analysis | 5 | Planned: OOF errors、taxonomy、contributions | 未実装／要件原本で要確認 |
-| BERT comparison | 6 | Optional/Planned only if approved | 実施要否を要件原本で要確認 |
-| Python code | 1–5 | Existing: Phase 1/2 package、tests; Planned: model/evaluation modules | 一部実装済み／要件原本で要確認 |
-| Result files | 2, 4, 5 | Existing: data-quality JSON/CSV/manifest; Planned: metrics/OOF/explanation | 一部実装済み／要件原本で要確認 |
-| PDF report | 7 | Existing: renderer tool; Planned: final report/PDF/check JSON | 最終成果物未作成／要件原本で要確認 |
+| Text preprocessing | 1, 3, 4 | `src/mail_classification/preprocessing/`、D0〜D2 ablation結果 | 実装済み／要件原本で要確認 |
+| TF-IDF | 3, 4 | `src/mail_classification/models/factory.py`、Fold内fit | 実装済み／要件原本で要確認 |
+| Linear classifier | 3, 4 | LinearSVC、Logistic Regression | 実装済み／要件原本で要確認 |
+| Accuracy | 4 | `outputs/runs/phase4-core-seed42/metrics_summary.csv` | 実装済み／要件原本で要確認 |
+| Precision | 4 | `metrics_long.csv`（macro/classwise） | 実装済み／要件原本で要確認 |
+| Recall | 4 | `metrics_long.csv`（macro/classwise） | 実装済み／要件原本で要確認 |
+| F1 | 4 | `metrics_long.csv`（macro-F1、weighted/classwise F1） | 実装済み／要件原本で要確認 |
+| Error analysis | 5 | `misclassifications.csv`、`error_category_summary.csv` | 実装済み／要件原本で要確認 |
+| BERT comparison | 6 | 未実施（`torch`のuv解決timeoutを理由に、User承認のもとMinHashLSHのみへ絞った） | 実施しない判断で確定／要件原本で要確認 |
+| Python code | 1–7 | `src/mail_classification/`全package、`tests/`257件 | 実装済み／要件原本で要確認 |
+| Result files | 2, 4, 5, 6 | data-quality JSON/CSV/manifest、metrics/OOF/explanation/near-duplicates CSV | 実装済み／要件原本で要確認 |
+| PDF report | 7 | `outputs/reports/phase7-report-phase4-core-seed42/report.pdf`（layout_check PASS） | 実装済み／要件原本で要確認 |
 
 ## 9. 実行上の原則
 
@@ -670,9 +676,9 @@ Phase 7 Report / PDF / Finalization          [Planned]
 
 ### 未確認事項
 
-- 大学課題10の要件原本。特にBERT比較の必須/任意、提出形式、評価指標の指定。
+- 大学課題10の要件原本。特にBERT比較の必須/任意、提出形式、評価指標の指定。本書・レポート第1章とも「要件原本で要確認」の留保を維持したまま全Phaseを完了している。
 - Mermaidは現PDF基盤で未検証のため、本書では使用していない。
-- Phase 4実測結果（macro-F1約0.58〜0.63、fold間標準偏差0.08〜0.13）の原因分析はPhase 5（説明性・誤分類分析）で行う。本書では断定していない。
+- `structural_content`カテゴリの誤分類比率が母集団比率（header/signature/quoted reply存在率）を実際に超過しているかは、Phase 5でも「頻度が高い」以上の因果検証を行っておらず未検証のまま。
 
 ### 直近アクション
 
@@ -682,4 +688,7 @@ Phase 7 Report / PDF / Finalization          [Planned]
 4. 完了: 共通5-fold assignment生成とFold Artifact書き出し（`outputs/folds/common_folds.json`）を実装した。
 5. 完了: Core条件D0〜D2をUser (Yuji Sunagawa)承認のもと確定し、TF-IDF/model factoryを実装した（commit `1a44c81`）。
 6. 完了: Phase 4 Core実験（6セル×5-fold）を実データで実行し、Fold Long/集約/OOF/confusion/paired differences/manifestを`outputs/runs/phase4-core-seed42/`へ保存した。
-7. 次: Phase 5（説明性・誤分類分析）着手前に、local 6 commits（`9c08871`以降）のpush、および本ドキュメント整理・Phase 4実装のcommit/push要否をユーザーへ確認する。
+7. 完了: Phase 5（説明性・誤分類分析）を実データで実行し、`outputs/runs/phase5-explain-seed42/`へ係数・誤分類・error taxonomyを保存した（commit `b2f76de`）。
+8. 完了: Phase 6 Extension（MinHashLSHのみ、User承認）を実データで実行し、`outputs/extensions/phase6-minhash-seed42/`へ近接重複結果を保存した（commit `9da0449`）。
+9. 完了: Phase 7 レポート生成モジュール・`scripts/build_report.py`を実装し、実データから`outputs/reports/phase7-report-phase4-core-seed42/`（report.md/PDF/layout_check.json/manifest）を生成、layout_check `PASS`を確認した（commit `0c6ce96`）。README.mdをPhase 0〜7の現状と実行可能な再現手順へ全面更新した（commit `3074a1d`）。
+10. 次: 最終検証ゲート（pytest／`uv lock --check`／`git diff --check`／機密情報混入チェック）を実施し、`agent/task10-phase7-report`を`main`へfast-forward mergeしてpushする。

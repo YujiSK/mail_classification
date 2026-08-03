@@ -3,7 +3,7 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-08-03T15:34:56+07:00` |
+| Last verified | `2026-08-03T15:40:07+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
@@ -16,10 +16,12 @@
 | Phase 7 implementation | `0c6ce96`（reporting module・`scripts/build_report.py`）、`3074a1d`（README全面更新）。実データ実行結果`outputs/reports/phase7-report-phase4-core-seed42/`はGit非追跡・再現可能、layout_check `PASS` |
 | Phase 7を`main`へ統合 | `0f20724`（`agent/task10-phase7-report`から`main`へfast-forward merge、User承認済み） |
 | Phase 8 evidence | `8b7a488`（検証済みDistilBERT fold metrics・OOF・execution manifest・Colab Notebook） |
-| Branch | `agent/task10-phase8-bert-comparison`（`main`＝`98fa4c9`から作成） |
-| Current phase | Phase 0〜7 `Completed`（`main`へ統合・push済み）。Phase 8はartifact検証・report/PDF統合・検査まで完了し、Git固定のみ未実施 |
+| Phase 8 report統合・要件正本統合 | `163bd0a`（Chapter 8実装、`docs/requirements/task10_assignment_requirements.md`統合） |
+| Phase 8を`main`へ統合 | `163bd0a`（`agent/task10-phase8-bert-comparison`から`main`へfast-forward merge） |
+| Branch | `agent/task10-phase8-bert-comparison`（`main`＝`98fa4c9`から作成、`main`が`163bd0a`へfast-forward mergeされた時点で本branchと同一commitに合流） |
+| Current phase | Phase 0〜8 `Completed`（`main`へ統合・push済み） |
 | Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`（Phase 0〜6）、`docs/management/daily_report_20260803.md`（セッション再開・状況確認、Phase 6統合、Phase 7実装・統合） |
-| Remote note | `origin/main`は`98fa4c9`（Phase 7＋第3/4章考察強化）。Phase 8 branchはlocalのみで1 commit先行し、要件正本・report統合差分は未commit |
+| Remote note | `main`は`163bd0a`（Phase 8まで）まで統合済み。旧8branch（`agent/pdf-renderer-port`、`agent/task10-phase2-data-generation`、`agent/task10-phase3-model-foundation`、`agent/task10-phase5-explainability`、`agent/task10-phase6-extension`、`agent/task10-phase7-report`、`agent/task10-phase7-report-discussion`、`agent/task10-phase8-bert-comparison`）は全て`main`の祖先。push実施中 |
 
 Coreテーマ:
 

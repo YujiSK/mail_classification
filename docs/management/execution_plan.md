@@ -3,7 +3,7 @@
 | Item | Current snapshot |
 | --- | --- |
 | Project | Task 10: English synthetic inquiry-mail classification |
-| Last verified | `2026-07-31T17:26:34+07:00` |
+| Last verified | `2026-08-03T08:52:51+07:00` |
 | Phase 2B implementation | `5fd02f4fed3b451d6e3fa4fd1c579fa7b808d254` |
 | Phase 2C implementation | `e37ea0de86876c2b93ef1d91cb5cf4b611661002` |
 | Phase 3 implementation | `1a44c81`（scikit-learn導入・Full hash契約・共通Fold・model factory・Core条件D0〜D2） |
@@ -13,9 +13,9 @@
 | Phase 5を`main`へ統合 | `c1e8d10`（`agent/task10-phase5-explainability`から`main`へfast-forward merge、push済み） |
 | Phase 6 implementation | `9da0449`（MinHashLSH近接重複センシティビティ、実データ実行結果`outputs/extensions/phase6-minhash-seed42/`はGit非追跡・再現可能） |
 | Branch | `agent/task10-phase6-extension`（`main`＝`c1e8d10`から新規作成） |
-| Current phase | Phase 2〜5 `Completed`（`main`へ統合・push済み）。Phase 6 `Completed`（MinHashLSHのみ承認・実施、BERT非実施、本branch、pushはこの後実施） |
-| Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |
-| Remote note | `main`は`c1e8d10`まで同期済み。`agent/task10-phase6-extension`はPhase 6実装commit後にpush予定 |
+| Current phase | Phase 2〜5 `Completed`（`main`へ統合・push済み）。Phase 6 `Completed`（MinHashLSHのみ承認・実施、BERT非実施、push済み、`main`への統合はユーザー確認待ち）。Phase 7は未着手 |
+| Status sources | 実在するGit履歴、`docs/management/daily_report_20260731.md`（Phase 0〜6）、`docs/management/daily_report_20260803.md`（セッション再開・状況確認）、機械可読のSmoke/Pilot/Full manifest・品質artifact・追跡対象review decisions |
+| Remote note | `main`は`c1e8d10`（Phase 5まで）で停止。`agent/task10-phase6-extension`は`f847cd3`までpush済みだが`main`未統合（ユーザー確認待ち） |
 
 Coreテーマ:
 
@@ -33,7 +33,7 @@ Coreテーマ:
 - データ品質契約: `docs/contracts/data_quality_contract.md`
 - 人間レビュー手順: `docs/contracts/human_review_guide.md`
 - Phase 3依存・Fold・model契約: `docs/contracts/phase3_model_contract.md`
-- 実行履歴: `docs/management/daily_report_20260731.md`
+- 実行履歴: `docs/management/daily_report_20260731.md`（Phase 0〜6）、`docs/management/daily_report_20260803.md`（以降）
 
 Phase 4以降の詳細仕様書は現時点で確認できないため正本として扱わず、必要になったPhaseのPlanned成果物とする。古いbranch、HEAD、進捗値は本書へ履歴として蓄積せず、冒頭のcurrent snapshotだけを更新する。履歴の正本はGitと日報である。
 

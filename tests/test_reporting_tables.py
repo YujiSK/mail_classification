@@ -142,6 +142,62 @@ def test_build_paired_differences_table(tmp_path: Path) -> None:
     assert "D1" in result
 
 
+def test_read_paired_diff_mean(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    rows = [
+        {
+            "baseline_condition": "D0",
+            "condition": "D1",
+            "model": "linear_svc",
+            "metric": "macro_f1",
+            "mean_diff": "0.0123",
+            "std_diff": "0.02",
+            "n_improved": "4",
+            "n_worsened": "1",
+            "n_folds": "5",
+        }
+    ]
+    _write_csv(
+        run_dir / "paired_differences.csv",
+        rows,
+        [
+            "baseline_condition",
+            "condition",
+            "model",
+            "metric",
+            "mean_diff",
+            "std_diff",
+            "n_improved",
+            "n_worsened",
+            "n_folds",
+        ],
+    )
+
+    assert tables.read_paired_diff_mean(run_dir, "D1", "linear_svc") == pytest.approx(0.0123)
+
+
+def test_read_paired_diff_mean_missing_cell_raises(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    _write_csv(
+        run_dir / "paired_differences.csv",
+        [],
+        [
+            "baseline_condition",
+            "condition",
+            "model",
+            "metric",
+            "mean_diff",
+            "std_diff",
+            "n_improved",
+            "n_worsened",
+            "n_folds",
+        ],
+    )
+
+    with pytest.raises(ValueError, match="no paired_differences row"):
+        tables.read_paired_diff_mean(run_dir, "D1", "linear_svc")
+
+
 def test_build_error_category_summary_table(tmp_path: Path) -> None:
     run_dir = tmp_path / "run"
     rows = []

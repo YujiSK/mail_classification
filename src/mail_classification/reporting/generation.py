@@ -94,6 +94,11 @@ def build_report_markdown(
 
     structure_ratios = quality_summary["structure_ratios"]
 
+    d1_diff_svc = tables.read_paired_diff_mean(core_dir, "D1", "linear_svc")
+    d1_diff_lr = tables.read_paired_diff_mean(core_dir, "D1", "logistic_regression")
+    d2_diff_svc = tables.read_paired_diff_mean(core_dir, "D2", "linear_svc")
+    d2_diff_lr = tables.read_paired_diff_mean(core_dir, "D2", "logistic_regression")
+
     return f"""# 課題10 レポート: 英語問い合わせメールのTF-IDF＋線形分類
 
 本レポートは`outputs/runs/{core_run_id}/`（Core）、`outputs/runs/{explain_run_id}/`（説明性・誤分類分析）、`outputs/extensions/{extension_run_id}/`（Extension: MinHashLSH）に保存済みの機械可読artifactのみから生成する。手動転記した数値は含まない。
@@ -154,6 +159,12 @@ Full datasetは{quality_summary["total_count"]}件、4クラス均等配分、{q
 
 fold間標準偏差は0.08〜0.13と大きい。これはlabelあたりのtemplate group数がn_splitsで割り切れないために生じるfold size不均衡（`docs/contracts/phase3_model_contract.md`記載の既知の限界）が一因と見られる。
 
+### 考察: アブレーション条件によるスコア変動とfold不均衡の意味
+
+- **D0→D1（bigram追加）の効果はモデルで符号が異なる**: `linear_svc`ではmacro-F1が{d1_diff_svc:+.3f}（paired differencesより）と改善する一方、`logistic_regression`では{d1_diff_lr:+.3f}と悪化している。bigramは特徴空間の次元を増やし語彙をより疎にするが、マージン最大化を目的とするLinearSVCは高次元・疎な特徴空間でも分離超平面を比較的安定して学習できるのに対し、対数損失を最小化するLogistic Regressionは少数の強いbigram特徴に適合しやすく、Foldごとに異なる語彙（TF-IDFはFold内でのみfitする設計のため）の影響をより大きく受ける可能性がある。これは今回のデータ・モデル設定下での観察であり、一般的なLinearSVC対Logistic Regressionの優劣を主張するものではない（仮説）。
+- **D0→D2（前処理強化）の効果も一様ではない**: `linear_svc`で{d2_diff_svc:+.3f}、`logistic_regression`で{d2_diff_lr:+.3f}。header／signature／quoted replyの除去とURL／emailマスクは構造的ノイズを除去する一方、これらの要素に付随していた（ラベルと直接関係しないが頻度に偏りのある）語彙も同時に失われるため、効果はモデル・データの偶然性に応じて相殺され得る。「前処理を強くすれば必ず改善する」という前提は本データでは支持されない。
+- **fold間標準偏差が大きい具体的な理由**: 各labelはtemplate groupを6個持つが、5-foldへ均等分配できない（6÷5）。`StratifiedGroupKFold`は必ず1 foldにつき1 labelあたり2 group分（約66件）を割り当て、残り4 foldsは1 group分（33〜34件）とする。同一template groupのsampleは語彙・表現が類似するため、「2 group分を含むfold」と「1 group分のみのfold」ではvalidation setの語彙構成自体が異なり、単純なランダムサンプリング以上にfold間でスコアがばらつく。これはCV実装の不具合ではなく、24 template groups（label当たり6 groups）× 5 foldsという設計上の数学的必然である。
+
 ## 第4章 説明性・誤分類分析
 
 {error_table}
@@ -161,6 +172,12 @@ fold間標準偏差は0.08〜0.13と大きい。これはlabelあたりのtempla
 `structural_artifact_audit.csv`の再監査では、`subject`／`from`／`sent`／`cc`／`bcc`／`url`／`wrote`はいずれのtop featureにも出現せず、header／URL由来の明確なリークは確認されなかった。`email`のみ全条件のtop_absolute featureに出現するが、D0（header／URL／email非除去）でも同様に出現するため、`<EMAIL>`置換由来の構造artifactというより合成本文中の自然な語彙である可能性が高いと仮説的に判断する（断定しない）。
 
 `structural_content`カテゴリが最多だが、これは合成データ全体でのheader／signature／quoted reply存在比率（{structure_ratios["has_header"]:.0%}／{structure_ratios["has_signature"]:.0%}／{structure_ratios["has_quoted_reply"]:.0%}）自体が高いためであり、誤分類での比率が母集団比率より高いかは本分析では未検証である。
+
+### 考察: 誤分類カテゴリの背景とTF-IDFの構造的限界
+
+- **`structural_content`が最多である背景**: TF-IDFはbag-of-words表現であり、語順や文脈を利用しない。header／signature／quoted replyを含むmailは本文中の総token数が増え、ラベルと直接関係しない語（署名の氏名、返信ヘッダの日時表記など）がベクトルに追加される。これらの語自体は強い係数を持たない（上記structural_artifact_auditの再監査結果参照）が、文書全体のTF正規化（各語の相対頻度）を薄める方向へ働き、真にラベルと関連する語のTF-IDF重みを相対的に低下させている可能性がある（仮説、本分析では因果関係までは検証していない）。
+- **`multi_intent`（複数意図）の誤分類**: 1通のmailが複数カテゴリに関連する内容を含む場合、TF-IDFベクトルは両カテゴリの語彙が混在した単一の点として表現され、単一ラベル分類の決定境界上でどちらのクラス領域に属するかが本質的に曖昧になる。これは前処理やモデル選択では解消できない、single-label分類の設計とmulti-intentな入力との間の構造的な不整合である。
+- **TF-IDF＋線形モデルの構造的限界**: 本手法は「どの語が出現したか」のみを特徴とし、語順・否定のスコープ・文脈依存の意味を直接モデル化しない。decision score分析（`misclassifications.csv`の`predicted_top_features`／`true_top_features`列）で確認した「正解class寄りの語が存在するにもかかわらず誤分類となる例」は、個々の強い語の存在だけでは文全体の意図を正しく判定できないことを示唆している。文脈を考慮するTransformer系モデルとの比較は本Phaseの範囲外だが、将来的な検証候補である。
 
 ## 第5章 Extension: MinHashLSH近接重複センシティビティ
 

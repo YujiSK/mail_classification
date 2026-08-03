@@ -94,6 +94,25 @@ def build_paired_differences_table(
     return markdown_table(headers, table_rows)
 
 
+def read_paired_diff_mean(
+    run_dir: str | Path, condition: str, model: str, *, baseline: str = "D0", metric: str = "macro_f1"
+) -> float:
+    """Fetch a single mean_diff cell from paired_differences.csv, for prose that cites it."""
+    rows = read_csv_rows(Path(run_dir) / "paired_differences.csv")
+    for r in rows:
+        if (
+            r["baseline_condition"] == baseline
+            and r["condition"] == condition
+            and r["model"] == model
+            and r["metric"] == metric
+        ):
+            return float(r["mean_diff"])
+    raise ValueError(
+        f"no paired_differences row for baseline={baseline!r} condition={condition!r} "
+        f"model={model!r} metric={metric!r}"
+    )
+
+
 def build_error_category_summary_table(explain_run_dir: str | Path) -> str:
     rows = read_csv_rows(Path(explain_run_dir) / "error_category_summary.csv")
     categories = sorted({r["primary_category"] for r in rows})

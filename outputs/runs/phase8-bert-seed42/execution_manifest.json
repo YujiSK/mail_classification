@@ -1,0 +1,24 @@
+{
+    "project_id": "task10",
+    "target_data_hash": "53c6f8949a2c3c2c75351122e31dff6b43ca6ff8a4d8326947d387b75b9a0bbc",
+    "actual_data_hash": "53c6f8949a2c3c2c75351122e31dff6b43ca6ff8a4d8326947d387b75b9a0bbc",
+    "model_config": {
+        "model_name": "distilbert-base-uncased",
+        "epochs": 3,
+        "batch_size": 16,
+        "learning_rate": 2e-05,
+        "max_length": 128,
+        "random_seed": 42
+    },
+    "environment": {
+        "transformers_version": "5.13.1",
+        "torch_version": "2.11.0+cu128",
+        "python_version": "3.12.13",
+        "device": "cuda"
+    },
+    "artifacts": [
+        "bert_fold_metrics.csv",
+        "bert_oof_predictions.csv",
+        "execution_manifest.json"
+    ]
+}

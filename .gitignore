@@ -208,9 +208,14 @@ data/raw/*.jsonl
 outputs/data_quality/
 outputs/manifests/
 outputs/folds/
-outputs/runs/
+outputs/runs/*
 outputs/extensions/
 outputs/reports/
+
+# Phase 8 BERT comparison ran externally on Google Colab GPU; unlike the
+# other outputs/runs/ entries above, this repo has no code path that
+# regenerates it, so it is tracked as evidence rather than gitignored.
+!outputs/runs/phase8-bert-seed42/
 
 # Ruff stuff:
 .ruff_cache/

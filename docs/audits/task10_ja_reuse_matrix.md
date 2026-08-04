@@ -200,3 +200,32 @@ User（Yuji Sunagawa）がPilot 96件を全件目視レビューし、Full生成
 成功、英語版データhash・テストへの影響なしを確認済み。人手レビュー（96件全件、
 `pilot_review_samples_ja.csv`）の`review_status`記入と、Full生成に先立つ
 `docs/reviews/pilot_review_decision_ja.json`の承認記録は、User側の最終確認後に作成する。
+
+## Phase status一覧（2026-08-04時点、自律実行完了後）
+
+| Phase | 状態 | 主な成果物 |
+| --- | --- | --- |
+| JA-0 監査・アーキテクチャ決定 | Completed | 本ドキュメント |
+| JA-1 前処理 | Completed | `preprocessing/japanese.py`、fixture 39件、`docs/contracts/preprocessing_contract_ja.md` |
+| JA-2 データ生成 | Completed | Pilot 2ラウンドレビュー承認済み、Full 800件生成済み（`docs/reviews/pilot_review_decision_ja.json`） |
+| JA-3 条件設計・共通Fold | Completed | `models/conditions_ja.py`（J0/J1/J2/JC）、`outputs/folds/common_folds_ja.json`、`docs/contracts/phase3_model_contract_ja.md` |
+| JA-4 Core実験 | Completed | `outputs/runs/phaseJA4-core-seed42/`（8セル、macro-F1 0.586〜0.696） |
+| JA-5 説明性・誤分類分析 | Completed | `outputs/runs/phaseJA5-explain-seed42/`（構造リーク0件、拡張誤分類カテゴリ） |
+| JA-6 MinHash | Completed | `outputs/extensions/phaseJA6-minhash-seed42/`（cross-label pair 0件） |
+| JA-7 BERT比較 | Completed | `outputs/runs/phaseJA7-bert-seed42/`（ローカルCPU実行、macro-F1 0.772、Colab Notebook併載） |
+| JA-8 英日比較 | Completed | `scripts/generate_en_ja_comparison.py`、`outputs/runs/phaseJA8-en-ja-comparison-seed42.json` |
+| JA-9 最終レポート | Completed | `outputs/reports/phaseJA9-report-phaseJA4-core-seed42/`（11ページ、layout_check PASS） |
+
+英語版トラック（`main`統合済みPhase 0〜8）は本セッションを通じて無改修。data hash
+（`53c6f8949a2c3c2c75351122e31dff6b43ca6ff8a4d8326947d387b75b9a0bbc`）、
+`docs/reviews/full_review_decision.json`、既存テストは全て複数回にわたり再検証済み。
+
+## 未確認事項・今後の課題（正直な記録）
+
+- SudachiのMode（A/B/C）・辞書（core/full）・語形選択のアブレーションは未実施（Phase JA-3で
+  暫定値としてMode C・`normalized_form()`を採用したのみ）。
+- 誤分類の日本語固有カテゴリ（`orthographic_variation`／`mixed_ja_en`／
+  `morphological_segmentation`）はヒューリスティックであり、人手による厳密なラベル付けではない。
+- BERT実行はローカルCPU（`execution_environment: local_cpu_isolated_venv_python3.12`）であり、
+  Google Colab等のGPU環境とは異なる。実行1回・乱数seed 1点のみで、統計的有意差検定は行っていない。
+- 英日比較はsemantic_template_id単位（24 groups）の対応付けであり、記録上の1対1sample対応ではない。

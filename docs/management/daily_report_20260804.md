@@ -29,3 +29,62 @@
 2026-08-04 14:54:04 +07 — **開始**: レイアウトoverride設定のID参照説明を、標準JSON互換のコメント用フィールド名へ変更する。
 
 2026-08-04 14:54:20 +07 — **完了 (所要時間: 0分)**: `_id_reference`を説明専用の`_comment`フィールドへ変更。標準JSONとしての構文検証と`git diff --check`に成功。commit/push未実施。
+
+---
+
+2026-08-04 17:06:09 +07 — **事後再構成エントリ（§15運用の欠落を記録）**: 本日この時刻より前に実施した
+Task10-JA（日本語版）関連の作業一式について、`project_rules.md` §15が定める「工程開始・完了ごとの
+即時実時刻記録」を運用していなかった。個々の工程の実際の開始・完了時刻は記録されておらず、本エントリは
+それらを偽の実時刻で埋めるものではなく、欠落の事実と作業内容の要約のみを事後に記録するものである。
+
+該当作業（実施順、時刻不明）:
+
+1. Phase JA-0: `docs/audits/task10_ja_reuse_matrix.md`（配置決定・再利用マトリクス・依存関係・
+   命名規約・暫定Core条件）を起草。
+2. 依存関係追加: `sudachipy`/`sudachidict-core`/`neologdn`を`japanese` dependency groupへ追加し、
+   Python 3.14.4での動作を一時uv環境で検証後、`uv sync`／`uv lock`を実施。
+3. Phase JA-1: `src/mail_classification/preprocessing/japanese.py`（`JapanesePreprocessor`ほか）、
+   `tests/fixtures/preprocessing_cases_ja.yml`（39件）、`tests/test_preprocessing_ja.py`、
+   `docs/contracts/preprocessing_contract_ja.md`を実装。実装検証中に3件の実装バグ（引用ブロック
+   正規表現の過剰マッチ、否定形「無い」の未保護、日本語文字に隣接するURL/メールの未置換・過剰結合）
+   を発見・修正。
+4. Phase JA-2: `assets/templates/email_templates_ja.yml`（24 template groups、直訳ではなく新規著作、
+   `semantic_template_id`で英語tg001〜024と対応付け）、`generation/ja_models.py`、
+   `generation/ja_generator.py`、`generation/ja_pipeline.py`、`quality/ja_duplicates.py`、
+   `quality/ja_statistics.py`、`quality/ja_leakage.py`、`configs/phase2_ja.yml`、
+   `scripts/generate_smoke_data_ja.py`、`scripts/generate_pilot_data_ja.py`、
+   `tests/test_generation_ja.py`、`tests/test_data_quality_ja.py`を実装。
+5. Smoke（8件）・Pilot（96件）を実データ生成し、自動品質検査（重複0、leakage error/warning 0）を
+   確認。
+6. User（Yuji Sunagawa）によるPilot 96件の全件目視レビューで7件の指摘（`tg-ja-009`/`tg-ja-012`の
+   内容不備、テンプレート文体由来のリーク候補、`プロフィール`/`アカウント`表記ゆれ、
+   difficulty×multi_intentの交絡、否定分布の設計判断未記録、レビュー対象を96件全件へ拡大する必要、
+   URL/メール実例の追加提案）を受領し、全件対応してPilotを再生成。再監査で該当リーク候補の解消を
+   確認。対応内容の詳細は`docs/audits/task10_ja_reuse_matrix.md`「Pilotレビュー第1ラウンドの指摘と
+   対応」に記録済み。
+7. 上記全工程を通じて`uv run pytest -q`は376 passed（英語版・日本語版合算）を維持し、英語版の
+   既存テスト・データhashへの影響がないことを複数回確認した。作業終盤、`uv run pytest -q`実行が
+   副作用として英語版の`configs/report_layout_overrides.json`を書き換えたことを`git status`で検出し、
+   `git checkout`で復元、英語版トラックが無改修であることを再確認した。
+
+Full（800件）データは、Pilotに対する`docs/reviews/pilot_review_decision_ja.json`（承認記録）が
+未作成であるため未生成。以降のTask10-JA関連工程（Full生成、Phase JA-3以降）からは、§15の定める
+工程単位の実時刻記録をこのファイルへ都度追記する。
+
+---
+
+2026-08-04 17:09:48 +07 — **開始**: Pilotレビュー第2ラウンドでUser（Yuji Sunagawa）から
+Full生成の承認を受け、`docs/reviews/pilot_review_decision_ja.json`（承認記録）を作成し、
+Task10-JA Full（800件）データを生成する。
+
+2026-08-04 17:12:02 +07 — **完了 (所要時間: 3分)**: `docs/reviews/pilot_review_decision_ja.json`を
+英語版`pilot_review_decision.json`と同一schemaで作成（`pilot_data_hash`／
+`template_definition_hash`／`review_csv_sha256`／`leakage_findings_sha256`は
+`sha256_file`で実測、`informational_candidate_decisions`は`pilot_leakage_findings_ja.csv`の
+info候補25件全件を`accepted_intent_vocabulary`として記録）。`run_ja_generation_stage("full", ...)`
+を実行し、Full 800件（`data_hash=6d010d81e7d0dfc502eefb539a3523e70a0fb7f4c7fae909c9bdc338ca9fbf63`）
+を生成。4クラス各200件、difficulty 266/267/267、24 template groups各33/34、重複0、
+leakage error/warning 0、info候補25件（Pilotと同一集合、構造由来の候補なし）、
+`automatic_quality_pass: true`を確認。`uv run pytest -q`は376 passed、`uv lock --check`成功、
+`git status`で英語版追跡ファイルへの意図しない変更がないことを確認（前回発生した
+`report_layout_overrides.json`の副作用は今回発生せず）。commit/push未実施。

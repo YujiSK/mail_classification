@@ -1,0 +1,157 @@
+# Concrete input/expected cases for JapanesePreprocessor. Every expected_text
+# / expected_tokens value below was derived by running the actual
+# implementation (see docs/audits/task10_ja_reuse_matrix.md), then reviewed
+# for plausibility -- this fixture is a regression guard, not a hand-derived
+# linguistic ground truth. project_rules.md §11 requires 30+ concrete cases;
+# this file has more to also cover remove_pos/negation-protection/token_form
+# ablation knobs that the English fixture has no equivalent of.
+- id: nfkc_fullwidth_ascii
+  input: "ＵＲＬ"
+  expected_text: "url"
+  expected_tokens: ["URL"]
+- id: nfkc_fullwidth_digits
+  input: "２ＦＡ"
+  expected_text: "2fa"
+  expected_tokens: ["2", "FA"]
+- id: nfkc_halfwidth_katakana
+  input: "ｶﾀｶﾅ"
+  expected_text: "カタカナ"
+  expected_tokens: ["片仮名"]
+- id: whitespace_fullwidth_space
+  input: "こんにちは　世界"
+  expected_text: "こんにちは世界"
+  expected_tokens: ["今日は", "世界"]
+- id: neologdn_elongation
+  input: "すごーーく遅い"
+  expected_text: "すごーく遅い"
+  expected_tokens: ["凄い", "遅い"]
+- id: neologdn_exclamation_repeat
+  input: "遅い！！！"
+  expected_text: "遅い!!!"
+  expected_tokens: ["遅い", "!", "!", "!"]
+- id: header_from_to_subject
+  input: "差出人: taro@example.com\n宛先: help@example.invalid\n件名: ログインについて\n\nこんにちは"
+  expected_text: "こんにちは"
+  expected_tokens: ["今日は"]
+- id: header_sent
+  input: "送信日時: 2026-08-01 10:00\nこんにちは"
+  expected_text: "こんにちは"
+  expected_tokens: ["今日は"]
+- id: signature
+  input: "ご確認ください\n--\n山田太郎\n株式会社サンプル"
+  expected_text: "ご確認ください"
+  expected_tokens: ["御", "確認", "下さる"]
+- id: quoted_line_halfwidth
+  input: "新しい回答\n> 以前の質問"
+  expected_text: "新しい回答"
+  expected_tokens: ["新しい", "回答"]
+- id: quoted_line_fullwidth
+  input: "新しい回答\n＞ 以前の質問"
+  expected_text: "新しい回答"
+  expected_tokens: ["新しい", "回答"]
+- id: reply_block
+  input: "新しい回答です\n山田さんが次のように書きました:\n> 以前のお問い合わせ"
+  expected_text: "新しい回答です"
+  expected_tokens: ["新しい", "回答", "です"]
+- id: reply_block_sent_variant
+  input: "承知しました\nサポートが次のように送信しました:\n> 元のメッセージ"
+  expected_text: "承知しました"
+  expected_tokens: ["承知", "為る", "ます", "た"]
+- id: reply_block_preserves_preceding_lines
+  input: "本文1行目\n本文2行目\nサポートが次のように書きました:\n引用本体"
+  expected_text: "本文1行目 本文2行目"
+  expected_tokens: ["本文", "1", "行", "目", "本文", "2", "行", "目"]
+- id: html_tag
+  input: "<p>こんにちは<b>世界</b></p>"
+  expected_text: "こんにちは世界"
+  expected_tokens: ["今日は", "世界"]
+- id: html_entity
+  input: "AとBの&amp;比較"
+  expected_text: "aとbの&比較"
+  expected_tokens: ["a", "と", "b", "の", "&", "比較"]
+- id: url_masking
+  input: "詳細はこちらhttps://example.com/helpをご覧ください"
+  expected_contains: ["<url>"]
+- id: url_masking_no_space_before_japanese
+  input: "URLはhttps://example.com/path、メールはuser@example.co.jpです"
+  expected_text: "urlは<url>、メールは<email>です"
+- id: email_masking
+  input: "メールuser@example.co.jpまでご連絡ください"
+  expected_text: "メール<email>までご連絡ください"
+- id: url_query_string_and_email_do_not_merge
+  input: "詳細はhttps://example.com/help?id=123&lang=jaをご確認ください。"
+  expected_text: "詳細は<url>をご確認ください。"
+- id: empty
+  input: ""
+  expected_text: ""
+  expected_tokens: []
+- id: whitespace_only
+  input: "　\t\n "
+  expected_text: ""
+  expected_tokens: []
+- id: punctuation_only
+  input: "！？"
+  expected_text: "!?"
+  expected_tokens: ["!", "?"]
+- id: emoji_preserved
+  input: "困っています😅"
+  expected_contains: ["😅"]
+- id: mixed_language
+  input: "パスワードをresetしてください"
+  expected_text: "パスワードをresetしてください"
+  expected_tokens: ["パスワード", "を", "reset", "為る", "て", "下さる"]
+- id: negation_auxiliary_dekinai
+  input: "ログインできない"
+  expected_tokens: ["ログイン", "出来る", "ない"]
+- id: negation_hyoki_yure_kanji_form_matches_kana_form
+  input: "ログイン出来ない"
+  expected_tokens: ["ログイン", "出来る", "ない"]
+- id: negation_adjectival_dewanai
+  input: "解約ではないです"
+  expected_tokens: ["解約", "で", "は", "無い", "です"]
+- id: negation_polite_masen
+  input: "パスワードがわかりません"
+  expected_tokens: ["パスワード", "が", "分かる", "ます", "ず"]
+- id: negation_inside_multi_intent_sentence
+  input: "解約したいわけではないのですが、次回の請求だけ止められますか。"
+  expected_tokens_contain: ["無い"]
+- id: katakana_loanword_term
+  input: "サブスクリプションを解約したいです"
+  expected_tokens: ["サブスクリプション", "を", "解約", "為る", "たい", "です"]
+- id: mixed_alnum_product_name
+  input: "iPhone 15で2FAが届きません"
+  expected_text: "iphone 15で2faが届きません"
+- id: fullwidth_halfwidth_alnum_equivalence
+  input: "ＡＢＣ１２３とABC123"
+  expected_text: "abc123とabc123"
+- id: multi_line_body
+  input: "お世話になっております。\nエラーが出ます。\nご確認ください。"
+  expected_text: "お世話になっております。 エラーが出ます。 ご確認ください。"
+- id: katakana_duration_adverb
+  input: "エラーがずっと出ます"
+  expected_tokens: ["エラー", "が", "ずっと", "出る", "ます"]
+- id: polite_request_form
+  input: "ご確認いただけますでしょうか。"
+  expected_tokens: ["御", "確認", "頂く", "ます", "です", "か", "。"]
+- id: particle_removal_keeps_content_words
+  input: "パスワードがわかりません"
+  remove_pos: ["助詞"]
+  expected_tokens: ["パスワード", "分かる", "ます", "ず"]
+- id: auxiliary_removal_with_negation_protection
+  input: "ログインできない"
+  remove_pos: ["助動詞"]
+  protect_negation: true
+  expected_tokens: ["ログイン", "出来る", "ない"]
+- id: auxiliary_removal_without_negation_protection_drops_negation
+  input: "ログインできない"
+  remove_pos: ["助動詞"]
+  protect_negation: false
+  expected_tokens: ["ログイン", "出来る"]
+- id: surface_token_form
+  input: "ログイン出来ない"
+  token_form: "surface"
+  expected_tokens: ["ログイン", "出来", "ない"]
+- id: dictionary_token_form
+  input: "ログイン出来ない"
+  token_form: "dictionary_form"
+  expected_tokens: ["ログイン", "出来る", "ない"]

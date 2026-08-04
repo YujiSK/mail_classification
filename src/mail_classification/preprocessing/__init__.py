@@ -9,6 +9,16 @@ from .english import (
     SegmentationConfig,
     UnsupportedPreprocessorVersion,
 )
+from .japanese import (
+    JapaneseCleaner,
+    JapaneseCleaningConfig,
+    JapaneseNormalizationConfig,
+    JapaneseNormalizer,
+    JapanesePreprocessingConfig,
+    JapanesePreprocessor,
+    JapaneseSegmentationConfig,
+    JapaneseSegmenter,
+)
 from .stats import PreprocessingResult, ProcessingStats
 
 __all__ = [
@@ -16,6 +26,14 @@ __all__ = [
     "CleaningConfig",
     "EnglishPreprocessingConfig",
     "EnglishPreprocessor",
+    "JapaneseCleaner",
+    "JapaneseCleaningConfig",
+    "JapaneseNormalizationConfig",
+    "JapaneseNormalizer",
+    "JapanesePreprocessingConfig",
+    "JapanesePreprocessor",
+    "JapaneseSegmentationConfig",
+    "JapaneseSegmenter",
     "NormalizationConfig",
     "Normalizer",
     "PreprocessingResult",

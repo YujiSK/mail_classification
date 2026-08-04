@@ -1,0 +1,42 @@
+schema_version: "1.0"
+generator:
+  version: "1.1.0"
+  full_version: "1.0.0"
+  seed: 20260804
+  deterministic_generated_at: "2026-08-04T00:00:00+00:00"
+  variations_per_template: 4
+stages:
+  smoke:
+    count: 8
+    enabled: true
+  pilot:
+    count: 96
+    enabled: true
+  full:
+    count: 800
+    enabled: true
+quality:
+  min_template_groups_per_label: 6
+  max_class_ratio_deviation: 0.02
+  max_length_mean_ratio: 2.0
+  max_template_group_share: 0.25
+  max_exact_duplicate_groups: 0
+  max_normalized_duplicate_groups: 0
+  exclusive_feature_min_count: 4
+  full_exclusive_feature_min_count: 30
+  max_shared_component_ratio_deviation: 0.05
+  max_template_group_count_difference: 1
+  max_difficulty_count_difference: 1
+  review_samples_per_label: 24
+  required_difficulties:
+    - easy
+    - medium
+    - hard
+paths:
+  templates: assets/templates/email_templates_ja.yml
+  smoke_data: data/raw/smoke_emails_ja.jsonl
+  pilot_data: data/raw/pilot_emails_ja.jsonl
+  full_data: data/raw/full_emails_ja.jsonl
+  pilot_review_decision: docs/reviews/pilot_review_decision_ja.json
+  quality_dir: outputs/data_quality
+  manifest_dir: outputs/manifests

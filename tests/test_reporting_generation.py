@@ -107,20 +107,33 @@ def test_build_report_markdown_contains_key_sections(tmp_path: Path) -> None:
     )
 
     for heading in (
-        "第1章 大学課題要件との対応",
-        "第2章 データ概要と合成データの限界",
-        "第3章 Core実験結果",
-        "第4章 説明性・誤分類分析",
-        "第5章 Extension",
-        "第6章 リーク監査まとめ",
-        "第7章 再現手順",
-        "第8章 既知の限界・未実施事項",
+        "第1章 はじめに",
+        "第2章 関連技術",
+        "第3章 実験方法",
+        "第4章 実験結果",
+        "第5章 考察",
+        "第6章 データ品質とリーク対策",
+        "第7章 限界と今後の課題",
+        "第8章 まとめ",
+        "第9章 参考文献",
+        "付録 Technical Appendix",
     ):
         assert heading in markdown_text
     assert manifests["core"]["data_hash"] in markdown_text
     assert "figures/macro_f1_comparison.svg" in markdown_text
-    assert "docs/requirements/task10_assignment_requirements.md" in markdown_text
-    assert "要件原本ファイルは本監査時点でリポジトリ内に確認できなかった" not in markdown_text
+    body, appendix = markdown_text.split("## 付録 Technical Appendix", maxsplit=1)
+    assert manifests["core"]["data_hash"] not in body
+    assert manifests["core"]["run_id"] not in body
+    assert "outputs/" not in body
+    assert "Phase " not in body
+    assert manifests["core"]["data_hash"] in appendix
+    assert "Macro Precision" in body and "Macro Recall" in body
+    assert "D1（bigram追加条件）" in body
+    assert "uni-gram" not in body and "bi-gram" not in body
+    assert "linear_svc" not in body
+    assert "/home/" not in appendix and "/tmp/" not in appendix
+    assert "各指標は5分割の平均値を用いて比較した" in body
+    assert "表中の値は5分割の平均と母標準偏差" not in body
 
 
 def test_write_report_end_to_end_with_synthetic_pipeline(tmp_path: Path) -> None:
@@ -270,10 +283,16 @@ def test_build_report_with_real_bert_comparison_chapter(tmp_path: Path) -> None:
     )
 
     markdown_text = result.markdown_path.read_text(encoding="utf-8")
-    assert "第8章 Extension: DistilBERTとの性能比較" in markdown_text
-    assert "第9章 既知の限界・未実施事項" in markdown_text
+    assert "4.5 DistilBERTとの比較" in markdown_text
+    assert "5.5 DistilBERTとの比較" in markdown_text
+    assert "第7章 限界と今後の課題" in markdown_text
     assert "distilbert-base-uncased" in markdown_text
-    assert "DistilBERT (fine-tuned)" in markdown_text
+    assert "DistilBERT（ファインチューニング）" in markdown_text
+    assert "D1（bigram追加条件）＋LinearSVC" in markdown_text
+    assert "`body_text`を加工せず標準Tokenizerへ渡して" in markdown_text
+    assert "入力対象が完全には一致していない" in markdown_text
+    assert "分類パイプライン全体の比較" in markdown_text
+    assert "今後は同一入力を用いた比較が必要" in markdown_text
 
     check_result = json.loads(result.layout_check_path.read_text(encoding="utf-8"))
     assert check_result["status"] != "FAIL"

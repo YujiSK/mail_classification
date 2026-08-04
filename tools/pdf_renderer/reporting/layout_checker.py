@@ -14,12 +14,18 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import pdfplumber
+
+# ChromiumがCJKフォントをType 3として埋め込んだPDFでは、FontBBoxを持たない
+# font descriptorが生成される。pdfminerはフォールバックして解析を継続できるため、
+# この既知の非致命的な警告だけを表示しない。
+logging.getLogger("pdfminer.pdffont").setLevel(logging.ERROR)
 
 # Chromium(Skia)がPDF化する際に確認された、字形が近い別コードポイントへの置換の例。
 # NFKC正規化で解決できないもの（Unicode上は非互換な文字同士）のみ手動で補う。

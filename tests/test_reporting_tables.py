@@ -215,6 +215,30 @@ def test_build_error_category_summary_table(tmp_path: Path) -> None:
     assert result.count("| 3 |") == len(tables.CORE_CONDITIONS) * len(tables.CORE_MODELS)
 
 
+def test_build_error_category_percentage_table(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run"
+    rows = []
+    for condition in tables.CORE_CONDITIONS:
+        for model in tables.CORE_MODELS:
+            rows.extend(
+                [
+                    {"condition": condition, "model": model, "primary_category": "multi_intent", "count": "1"},
+                    {"condition": condition, "model": model, "primary_category": "structural_content", "count": "3"},
+                ]
+            )
+    _write_csv(
+        run_dir / "error_category_summary.csv",
+        rows,
+        ["condition", "model", "primary_category", "count"],
+    )
+    result = tables.build_error_category_percentage_table(run_dir)
+    assert "1 (25.0%)" in result
+    assert "3 (75.0%)" in result
+    assert "LinearSVC" in result
+    assert "誤分類数" in result
+    assert "誤分類総数" not in result
+
+
 def test_build_extension_summary_table(tmp_path: Path) -> None:
     extension_dir = tmp_path / "extension"
     extension_dir.mkdir(parents=True)
@@ -425,7 +449,7 @@ def test_build_bert_comparison_table(tmp_path: Path) -> None:
     )
 
     result = tables.build_bert_comparison_table(core_dir, bert_dir)
-    assert "DistilBERT (fine-tuned)" in result
+    assert "DistilBERT（ファインチューニング）" in result
     assert "0.800 ± 0.000" in result
     assert result.count("0.600 ± 0.100") == len(tables.CORE_CONDITIONS) * len(tables.CORE_MODELS)
 
@@ -433,15 +457,15 @@ def test_build_bert_comparison_table(tmp_path: Path) -> None:
 def test_build_bert_required_metrics_table(tmp_path: Path) -> None:
     core_dir = tmp_path / "core"
     rows = [
-        {"condition": "D2", "model": "linear_svc", "metric": "accuracy", "cv_mean": "0.61", "cv_std": "0.1", "n_folds": "5"},
-        {"condition": "D2", "model": "linear_svc", "metric": "macro_f1", "cv_mean": "0.60", "cv_std": "0.1", "n_folds": "5"},
+        {"condition": "D1", "model": "linear_svc", "metric": "accuracy", "cv_mean": "0.61", "cv_std": "0.1", "n_folds": "5"},
+        {"condition": "D1", "model": "linear_svc", "metric": "macro_f1", "cv_mean": "0.60", "cv_std": "0.1", "n_folds": "5"},
     ]
     for prefix, values in (("precision", (0.60, 0.62, 0.64, 0.66)), ("recall", (0.58, 0.60, 0.62, 0.64))):
         for label, value in zip(
             ("account_support", "billing", "product_inquiry", "technical_issue"), values
         ):
             rows.append(
-                {"condition": "D2", "model": "linear_svc", "metric": f"{prefix}_{label}", "cv_mean": str(value), "cv_std": "0.1", "n_folds": "5"}
+                {"condition": "D1", "model": "linear_svc", "metric": f"{prefix}_{label}", "cv_mean": str(value), "cv_std": "0.1", "n_folds": "5"}
             )
     _write_csv(
         core_dir / "metrics_summary.csv",
@@ -460,10 +484,10 @@ def test_build_bert_required_metrics_table(tmp_path: Path) -> None:
     )
 
     result = tables.build_bert_required_metrics_table(core_dir, bert_dir)
-    assert "TF-IDF + LinearSVC (D2)" in result
+    assert "D1（bigram追加条件）＋LinearSVC" in result
     assert "| Accuracy | 0.610 | 0.790 |" in result
-    assert "| Precision (macro) | 0.630 | 0.820 |" in result
-    assert "| Recall (macro) | 0.610 | 0.770 |" in result
+    assert "| Macro Precision | 0.630 | 0.820 |" in result
+    assert "| Macro Recall | 0.610 | 0.770 |" in result
     assert "| Macro-F1 | 0.600 | 0.750 |" in result
 
 
@@ -502,7 +526,7 @@ def test_build_structural_ratio_table(tmp_path: Path) -> None:
     assert "0.581" in result
     assert "0.578" in result
     assert "No" in result
-    assert "0.869" in result
+    assert "p-value" not in result
 
 
 def test_build_structural_ratio_narrative_reports_no_significant_bias(tmp_path: Path) -> None:
@@ -530,8 +554,8 @@ def test_build_structural_ratio_narrative_reports_no_significant_bias(tmp_path: 
     result = tables.build_structural_ratio_narrative(path)
     assert "has_header" in result
     assert "has_signature" in result
-    assert "有意ではなく" in result
-    assert "追加バイアスを生んでいるという根拠は本分析では確認されなかった" in result
+    assert "有意差の主張は行わない" in result
+    assert "p=" not in result
 
 
 def test_build_structural_ratio_narrative_reports_significant_bias(tmp_path: Path) -> None:
@@ -550,8 +574,8 @@ def test_build_structural_ratio_narrative_reports_significant_bias(tmp_path: Pat
     )
 
     result = tables.build_structural_ratio_narrative(path)
-    assert "有意に高く" in result
-    assert "バイアスが示唆される" in result
+    assert "有意差の主張は行わない" in result
+    assert "p=" not in result
 
 
 def _write_fold_imbalance_csv(path: Path, rows: list[dict]) -> None:

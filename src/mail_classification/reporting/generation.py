@@ -131,7 +131,7 @@ DistilBERTのmacro-F1（cv_mean、fold別`f1_score`の単純平均、Coreの`cv_
 """
 
 
-def build_report_markdown(
+def _build_legacy_report_markdown(
     manifests: dict[str, dict],
     core_dir: Path,
     explain_dir: Path,
@@ -148,12 +148,16 @@ def build_report_markdown(
 
     quality_summary = json.loads(quality_summary_path.read_text(encoding="utf-8"))
 
+    core_required_metrics_table = tables.build_core_required_metrics_table(core_dir)
     macro_f1_table = tables.build_metric_summary_table(core_dir, "macro_f1")
     accuracy_table = tables.build_metric_summary_table(core_dir, "accuracy")
     weighted_f1_table = tables.build_metric_summary_table(core_dir, "weighted_f1")
-    confusion_table = tables.build_confusion_matrix_table(core_dir, "D0", "linear_svc")
+    confusion_table = tables.build_confusion_matrix_table(core_dir, "D1", "linear_svc")
+    baseline_confusion_table = tables.build_confusion_matrix_table(
+        core_dir, "D0", "linear_svc"
+    )
     paired_table = tables.build_paired_differences_table(core_dir, baseline="D0", metric="macro_f1")
-    error_table = tables.build_error_category_summary_table(explain_dir)
+    error_table = tables.build_error_category_percentage_table(explain_dir)
     extension_table = tables.build_extension_summary_table(extension_dir)
     class_table = tables.build_class_distribution_table(quality_summary_path)
     structural_ratio_table = (
@@ -320,6 +324,361 @@ fold間標準偏差は0.08〜0.13と大きい。既存FoldとFullデータを突
 - `TfidfVectorizer`は`stop_words`未設定であり、一般的な機能語が上位寄与特徴に頻出する。D0〜D2は承認済みの固定specであり本Phaseでは変更していない。
 - {"fold sizeの不均衡は`outputs/analysis/fold_imbalance_stats.csv`で定量化済み（第3章参照）。" if fold_imbalance_path is not None else "fold sizeの不均衡（第3章参照）。"}
 - {"`structural_content`カテゴリの母集団比率との比較は`outputs/analysis/structural_ratio_comparison.json`で検証済み（第4章参照）。" if structural_ratio_path is not None else "`structural_content`カテゴリの母集団比率超過は未検証（第4章参照）。"}
+"""
+
+
+def build_report_markdown(
+    manifests: dict[str, dict],
+    core_dir: Path,
+    explain_dir: Path,
+    extension_dir: Path,
+    quality_summary_path: Path,
+    *,
+    bert_run_dir: Path | None = None,
+    fold_artifact_path: Path | None = None,
+    structural_ratio_path: Path | None = None,
+    fold_imbalance_path: Path | None = None,
+) -> str:
+    """Build the formal submission report from validated machine-readable artifacts.
+
+    Research content is presented first; run identifiers, hashes, paths, detailed
+    audit tables, and reproduction commands are retained in the technical appendix.
+    """
+    if bert_run_dir is not None and fold_artifact_path is None:
+        raise ValueError("fold_artifact_path is required when bert_run_dir is given")
+
+    quality_summary = json.loads(quality_summary_path.read_text(encoding="utf-8"))
+    core_required_metrics_table = tables.build_core_required_metrics_table(core_dir)
+    weighted_f1_table = tables.build_metric_summary_table(core_dir, "weighted_f1")
+    confusion_table = tables.build_confusion_matrix_table(core_dir, "D1", "linear_svc")
+    baseline_confusion_table = tables.build_confusion_matrix_table(
+        core_dir, "D0", "linear_svc"
+    )
+    paired_table = tables.build_paired_differences_table(core_dir, baseline="D0", metric="macro_f1")
+    error_table = tables.build_error_category_percentage_table(explain_dir)
+    extension_table = tables.build_extension_summary_table(extension_dir)
+    class_table = tables.build_class_distribution_table(quality_summary_path)
+
+    structural_ratio_table = (
+        tables.build_structural_ratio_table(structural_ratio_path)
+        if structural_ratio_path is not None
+        else "（構造要素の母集団比較データは、この生成時には選択されていない。）"
+    )
+    structural_ratio_narrative = (
+        tables.build_structural_ratio_narrative(structural_ratio_path)
+        if structural_ratio_path is not None
+        else "構造要素の比率差については、追加検証が必要である。"
+    )
+    fold_imbalance_table = (
+        tables.build_fold_imbalance_table(fold_imbalance_path)
+        if fold_imbalance_path is not None
+        else "（分割単位ごとの詳細集計は、この生成時には選択されていない。）"
+    )
+    fold_imbalance_narrative = (
+        tables.build_fold_imbalance_brief_narrative(fold_imbalance_path)
+        if fold_imbalance_path is not None
+        else "各クラスのテンプレートグループ数を5分割で均等に配分できないため、評価件数には差が生じる。"
+    )
+
+    data_hash = manifests["core"]["data_hash"]
+    fold_hash = manifests["core"]["fold_artifact_hash"]
+    core_run_id = manifests["core"]["run_id"]
+    explain_run_id = manifests["explain"]["run_id"]
+    extension_run_id = manifests["extension"]["run_id"]
+    structure_ratios = quality_summary["structure_ratios"]
+    project_root = core_dir.parents[2]
+
+    def relative_display(path: Path | None, fallback: str) -> str:
+        if path is None:
+            return fallback
+        resolved = Path(path).resolve()
+        try:
+            return str(resolved.relative_to(project_root.resolve()))
+        except ValueError:
+            return Path(path).name
+
+    best_condition, best_model, best_macro_f1 = tables.best_core_metric_cell(core_dir, "macro_f1")
+    d1_diff_svc = tables.read_paired_diff_mean(core_dir, "D1", "linear_svc")
+    d1_diff_lr = tables.read_paired_diff_mean(core_dir, "D1", "logistic_regression")
+    d2_diff_svc = tables.read_paired_diff_mean(core_dir, "D2", "linear_svc")
+    d2_diff_lr = tables.read_paired_diff_mean(core_dir, "D2", "logistic_regression")
+
+    if bert_run_dir is not None:
+        assert fold_artifact_path is not None
+        tables.verify_bert_alignment(bert_run_dir, fold_artifact_path, data_hash)
+        bert_manifest = json.loads(
+            (bert_run_dir / "execution_manifest.json").read_text(encoding="utf-8")
+        )
+        bert_config = bert_manifest["model_config"]
+        bert_environment = bert_manifest["environment"]
+        bert_mean, bert_std, bert_n_folds = tables.read_bert_fold_metric_cv(
+            bert_run_dir, "f1_score"
+        )
+        bert_results = f"""
+### 4.5 DistilBERTとの比較
+
+{tables.build_bert_required_metrics_table(core_dir, bert_run_dir)}
+
+全条件を含むmacro-F1の比較を以下に示す。
+
+{tables.build_bert_comparison_table(core_dir, bert_run_dir)}
+
+主比較対象はCore実験で最良だったD1（bigram追加条件）＋LinearSVCである。DistilBERTのmacro-F1は{bert_mean:.3f} ± {bert_std:.3f}（{bert_n_folds}分割）であり、最良TF-IDFモデルの{best_macro_f1:.3f}を上回った。
+"""
+        bert_discussion = f"""
+### 5.5 DistilBERTとの比較
+
+DistilBERTが線形モデルを上回ったことから、単語の出現頻度だけでなく、語順、否定の作用範囲、複数の意図を含む文章全体の文脈を考慮することが有効である可能性が示された。また、事前学習で得られた言語知識とsubword表現は、未知表現への対応にも寄与したと考えられる。ただし、本比較ではTF-IDFモデルとDistilBERTで入力対象が完全には一致していない。D1ではヘッダー、署名、引用返信を保持した全文を使用した一方、DistilBERTではこれらを含まない`body_text`を使用した。そのため、確認された性能差をモデル構造の違いだけに帰属することはできず、それぞれの入力処理を含めた分類パイプライン全体の比較として解釈する必要がある。さらに、DistilBERTはGPUを用いたファインチューニングを必要とし、学習時間、計算資源、説明可能性の面では線形モデルより不利である。本比較は1つの乱数seedによる5分割交差検証であり、一般的な優越性を断定するものではない。
+"""
+        bert_method = f"""
+DistilBERTには`{bert_config['model_name']}`を用い、epochs={bert_config['epochs']}、batch size={bert_config['batch_size']}、learning rate={bert_config['learning_rate']}、最大系列長={bert_config['max_length']}、乱数seed={bert_config['random_seed']}とした。Notebookでは合成データの`body_text`を加工せず標準Tokenizerへ渡しており、ヘッダー・署名・引用返信は入力に含まれない。URL・メールアドレスの独自置換、NFKC正規化、明示的な小文字化は行っていない。小文字化を含むトークン化処理は`distilbert-base-uncased`のTokenizer仕様に従う。線形モデルと同一のデータ分割を用いてファインチューニングした。
+"""
+        bert_limit = (
+            "- D1は構造要素を含む全文、DistilBERTは`body_text`を入力としており、性能差にはモデル構造だけでなく入力処理の違いも含まれる。今後は同一入力を用いた比較が必要である。\n"
+            "- DistilBERTは外部GPU環境で実行しており、ローカルCPU環境だけでは完全に同じ手順を再実行できない。"
+        )
+        bert_appendix = f"""
+### A.8 DistilBERT外部実験の実行情報
+
+- 実行識別子: `{bert_run_dir.name}`
+- モデル: `{bert_config['model_name']}`
+- 環境: Python {bert_environment['python_version']}、transformers {bert_environment['transformers_version']}、torch {bert_environment['torch_version']}、device={bert_environment['device']}
+- 検証: データhashおよび800件の評価Fold割当が線形モデル実験と一致
+- 証跡: `outputs/runs/{bert_run_dir.name}/`
+"""
+        bert_requirement = "| BERT／DistilBERTとの差異 | 第3〜5章、A.8 | 同一Foldで比較済み |"
+    else:
+        bert_method = "DistilBERTは発展モデルとして位置づけたが、この生成時には比較用の実験結果が選択されていない。"
+        bert_results = "\n### 4.5 DistilBERTとの比較\n\nこの生成時には比較用のDistilBERT実験結果が選択されていない。\n"
+        bert_discussion = "\n### 5.5 DistilBERTとの比較\n\n文脈を考慮するモデルとの定量比較は今後の課題である。\n"
+        bert_limit = "- DistilBERTとの定量比較結果は、この生成時には収録されていない。"
+        bert_appendix = ""
+        bert_requirement = "| BERT／DistilBERTとの差異 | 第3〜5章 | 比較結果未選択 |"
+
+    return f"""# 英語問い合わせメール分類におけるテキスト前処理と分類モデルの比較
+
+## TF-IDF・線形分類器・DistilBERTを用いた5分割交差検証
+
+## 第1章 はじめに
+
+企業に届く問い合わせメールを内容に応じて自動分類できれば、担当部署への振り分けや初動対応の効率化につながる。一方、メールには本文以外にヘッダー、署名、引用返信などが含まれ、同じ意図でも多様な表現が用いられるため、適切な前処理と分類手法を選ぶ必要がある。
+
+本研究では、英語の問い合わせメールを4種類に分類し、テキスト前処理と分類モデルの違いが性能へ与える影響を検証した。検証する点は次の3点である。
+
+1. unigram、bigramおよび構造要素除去を含む前処理条件が分類性能へ与える影響
+2. LinearSVCとLogistic Regressionの性能および特性の違い
+3. TF-IDFに基づく線形モデルとDistilBERTによる文脈依存モデルの差異
+
+## 第2章 関連技術
+
+### 2.1 テキスト分類とTF-IDF
+
+テキスト分類は、文書をあらかじめ定めたカテゴリへ割り当てる処理である。本研究では、語の出現頻度と文書集合内での希少性を組み合わせるTF-IDFを用いてメールを数値ベクトルへ変換した。unigramは単語を個別に扱い、bigramは隣接する2語の組も特徴として扱う。
+
+### 2.2 LinearSVCとLogistic Regression
+
+LinearSVCは、クラス間の余白を大きくする線形境界を学習する手法であり、高次元で疎なテキスト特徴に適している。Logistic Regressionは、各クラスの確率的な判定を対数損失に基づいて学習する線形分類手法である。両者を同一条件で比較することで、前処理とモデルの組合せによる差を調べた。
+
+### 2.3 評価指標
+
+Accuracyは全予測のうち正解した割合である。Precisionはあるクラスと予測した例の正確さ、Recallはそのクラスの実例を検出できた割合、F1はPrecisionとRecallの調和平均を表す。本研究では、各クラスを等しく評価するmacro-F1を主指標とし、Accuracy、macro Precision、macro Recall、weighted F1および混同行列も確認した。
+
+### 2.4 BERTとDistilBERT
+
+BERTはTransformerを用いて単語の前後関係を考慮した文脈依存表現を学習するモデルである。DistilBERTはBERTを軽量化したモデルであり、基本的な文脈表現能力を保ちながら計算量を抑えることを目的としている。
+
+## 第3章 実験方法
+
+### 3.1 データセット
+
+実験には英語の合成問い合わせメール{quality_summary['total_count']}件を用いた。クラスは`account_support`、`billing`、`product_inquiry`、`technical_issue`の4種類であり、各クラスの件数と比率を表3.1に示す。
+
+{class_table}
+
+表3.1: クラス別データ件数
+
+個人情報や企業秘密を含む実メールを使用せず、条件を統制して比較できる点から合成データを採用した。ただし、実際の顧客メールに見られる語彙、誤記、クラス不均衡、予期しない話題を十分に再現できないという限界がある。
+
+### 3.2 データ分割
+
+評価には5分割交差検証を用いた。同一テンプレートから生成された文章が学習用と評価用に分かれると、表現の暗記によって性能が過大評価される可能性があるため、同じテンプレートグループ（template group）を必ず同一Foldへ割り当てた。全モデル・全前処理条件で同一の分割を使用し、各Foldの学習データだけでTF-IDFを学習した。
+
+{fold_imbalance_narrative}
+
+### 3.3 前処理条件
+
+比較する条件を表3.2に示す。各条件では主要因を1つずつ変更し、bigram追加と構造要素除去の影響を分離した。
+
+| 条件 | テキスト処理 | TF-IDF特徴 |
+| --- | --- | --- |
+| D0（基本unigram条件） | NFKC正規化、句読点・空白の正規化、小文字化。ヘッダー、署名、引用返信、URL、メールアドレスは保持 | unigram |
+| D1（bigram追加条件） | D0と同じ | unigram＋bigram |
+| D2（構造要素除去条件） | D0に加え、ヘッダー・署名・引用返信を除去し、URL・メールアドレスを専用記号へ置換 | unigram |
+
+表3.2: 前処理条件
+
+### 3.4 分類モデル
+
+各条件についてLinearSVCとLogistic Regressionを学習した。いずれもTF-IDF変換と分類器を一つのPipelineにまとめ、評価Foldの情報が語彙やIDFへ混入しないようにした。
+
+発展実験としてDistilBERTも比較した。{bert_method}
+
+### 3.5 評価方法
+
+主指標はmacro-F1とし、Accuracy、macro Precision、macro Recall、weighted F1、クラス別指標および混同行列を記録した。各指標は5分割の平均値を用いて比較した。主要な指標については、Fold間のばらつきを確認するため母標準偏差も併記した。Foldを独立標本とみなした単純な有意差検定は行わない。
+
+## 第4章 実験結果
+
+### 4.1 課題指定4指標
+
+{core_required_metrics_table}
+
+表4.1: Core全条件のAccuracy、macro Precision、macro Recallおよびmacro-F1
+
+![前処理条件およびモデル別のmacro-F1](figures/macro_f1_comparison.svg)
+
+図4.1: 前処理条件およびモデル別のmacro-F1平均値
+
+線形モデルではD1（bigram追加条件）とLinearSVCの組合せが最も高く、macro-F1は{best_macro_f1:.3f}であった。
+
+### 4.2 補助指標：Weighted F1
+
+{weighted_f1_table}
+
+### 4.3 最良モデルの混同行列
+
+D1（bigram追加条件）とLinearSVCの評価対象全件を集約した混同行列を示す。行が正解クラス、列が予測クラスである。基準条件D0の混同行列は付録A.4に示す。
+
+{confusion_table}
+
+### 4.4 Foldごとの差
+
+D0を基準としたFold単位のmacro-F1差を示す。
+
+{paired_table}
+
+5分割間の標準偏差は条件によって無視できない大きさであり、評価用グループの構成によって性能が変動した。
+{bert_results}
+## 第5章 考察
+
+### 5.1 bigram追加の影響
+
+D0（基本unigram条件）からD1（bigram追加条件）への変更により、LinearSVCのmacro-F1は{d1_diff_svc:+.3f}変化した一方、Logistic Regressionでは{d1_diff_lr:+.3f}変化した。bigramは語の組合せを表現できるが特徴空間を大きくし、低頻度特徴も増加させる。このため、効果は分類器の学習特性とFoldごとの語彙構成に依存したと考えられる。
+
+### 5.2 前処理強化の影響
+
+D0（基本unigram条件）からD2（構造要素除去条件）への変化はLinearSVCで{d2_diff_svc:+.3f}、Logistic Regressionで{d2_diff_lr:+.3f}であった。構造的ノイズを除去しても一貫した改善は得られず、不要情報とともに分類に役立つ語彙や文脈を失う可能性が示された。したがって、前処理を強くするほど性能が向上するとは限らない。
+
+### 5.3 Fold間のばらつき
+
+同一テンプレートグループを分割しない設計により情報漏洩を抑えた一方、各クラスのグループ数を5等分できないため、Foldごとに評価件数と語彙構成が異なった。テンプレート由来の表現差が大きい合成データでは、この違いがスコアのばらつきへ強く影響したと考えられる。
+
+### 5.4 誤分類の特徴
+
+{error_table}
+
+誤分類には、複数の用件を同時に含むmulti_intentと、構造要素を含むメール（structural_content）が見られた。複数意図を1つのTF-IDFベクトルと単一ラベルへ対応させる場合、異なるクラスを示す語が同時に現れるため判定境界が曖昧になる。さらに、構造要素は文書を長くし、分類対象の意図を表す語の相対的な重みを弱める可能性がある。ただし、構造要素の出現比率は元のデータでも高く（ヘッダー{structure_ratios['has_header']:.1%}、署名{structure_ratios['has_signature']:.1%}、引用返信{structure_ratios['has_quoted_reply']:.1%}）、誤分類との因果関係をこの集計だけから断定することはできない。
+{bert_discussion}
+## 第6章 データ品質とリーク対策
+
+完全一致および正規化後一致による重複は、それぞれ{quality_summary['duplicate_group_counts']['exact']}件、{quality_summary['duplicate_group_counts']['normalized']}件であった。また、MinHashLSHによる近接重複検査では、異なるラベル間および異なるテンプレートグループ間の候補は確認されなかった。検出された類似文章は同一ラベル・同一テンプレートグループ内に限られており、グループ単位でFoldを分離した。
+
+ヘッダー、署名、引用返信、URLおよびメールアドレスが分類結果へ直接的な手掛かりを与えていないかも調査した。上位特徴には明確なヘッダー語やURL由来のリークは確認されなかった。これらの検査結果から、確認した範囲では評価値を著しく押し上げる重複・構造情報リークは認められなかった。
+
+## 第7章 限界と今後の課題
+
+- 合成データであり、実際の問い合わせにおける語彙、誤記、長さ、話題分布を十分に反映していない。
+- 4クラスが均等であり、クラス不均衡が生じる実運用条件とは異なる。
+- テンプレートグループ数が少なく、Foldごとの語彙構成と件数にばらつきがある。
+- 複数の意図を含むメールを単一ラベルへ分類しており、入力と課題設定に構造的な不一致がある。
+- stopword除去の有無は比較しておらず、機能語や否定表現の扱いを追加検証する必要がある。
+{bert_limit}
+- 今後は、機密性を保った実運用に近い外部データで評価し、multi-label分類や階層分類も検討する必要がある。
+
+## 第8章 まとめ
+
+本研究では、{quality_summary['total_count']}件の英語問い合わせメールを対象として、3種類の前処理条件と2種類の線形分類器を5分割交差検証で比較した。TF-IDFを用いた条件では、D1（bigram追加条件）とLinearSVCの組合せが最も高いmacro-F1 {best_macro_f1:.3f}を示した。一方、bigram追加および構造要素を除去する前処理の効果はモデル間で一貫せず、前処理の有効性が分類器とデータの性質に依存することが分かった。
+
+誤分類分析では、複数の意図を含むメールや構造要素を含むメールが分類上の課題となることを確認した。重複、テンプレート跨ぎ、構造要素による情報リークを検査し、確認した範囲では評価を無効にする明確なリークは認められなかった。これらの結果は、性能値だけでなく、データ分割、誤分類内容、計算資源および説明可能性を含めて分類方法を評価する必要性を示している。
+
+## 第9章 参考文献
+
+1. G. Salton and C. Buckley, “Term-weighting approaches in automatic text retrieval,” *Information Processing & Management*, 1988. https://doi.org/10.1016/0306-4573(88)90021-0
+2. C. Cortes and V. Vapnik, “Support-vector networks,” *Machine Learning*, 1995. https://doi.org/10.1007/BF00994018
+3. D. R. Cox, “The regression analysis of binary sequences,” *Journal of the Royal Statistical Society: Series B*, 1958. https://doi.org/10.1111/j.2517-6161.1958.tb00292.x
+4. J. Devlin et al., “BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding,” *NAACL-HLT*, 2019. https://aclanthology.org/N19-1423/
+5. V. Sanh et al., “DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter,” 2019. https://arxiv.org/abs/1910.01108
+6. F. Pedregosa et al., “Scikit-learn: Machine Learning in Python,” *Journal of Machine Learning Research*, 2011. https://jmlr.org/papers/v12/pedregosa11a.html
+7. Hugging Face, “distilbert/distilbert-base-uncased,” model documentation. https://huggingface.co/distilbert/distilbert-base-uncased
+
+## 付録 Technical Appendix（監査・再現情報）
+
+以下は本文の数値と実験条件を追跡するための技術情報である。本文の表と記述は、下記の機械可読成果物から生成されており、評価値を手動転記していない。
+
+## A.1 課題要件との対応
+
+| 課題要件 | 本文・付録 | 実装状態 |
+| --- | --- | --- |
+| メール分類とサンプルデータ | 第3章 | 合成メールを用いて実施済み |
+| テキスト前処理 | 第3章3節 | D0〜D2として実装済み |
+| TF-IDFと線形分類器 | 第2〜4章 | Pipeline内で学習済み |
+| Accuracy、Precision、Recall、F1 | 第2章3節、第4章 | Fold単位・集約値を保存済み |
+| 誤分類分析と改善策 | 第5章 | OOF予測に基づき実施済み |
+{bert_requirement}
+| Pythonソースコード | A.3 | リポジトリ内に保存済み |
+| 実行結果とPDF | A.2〜A.3 | CSV、JSON、PDFとして保存済み |
+
+## A.2 実験識別情報と検証値
+
+- データhash: `{data_hash}`
+- 共通Fold hash: `{fold_hash}`
+- 線形モデル実験run ID: `{core_run_id}`
+- 説明性・誤分類分析run ID: `{explain_run_id}`
+- 近接重複検査run ID: `{extension_run_id}`
+- 実験管理上の区分: データ生成=Phase 2、実験設計=Phase 3、線形モデル評価=Phase 4、説明性分析=Phase 5、近接重複検査=Phase 6、レポート生成=Phase 7、DistilBERT比較=Phase 8
+
+## A.3 成果物と再現手順
+
+主要な機械可読成果物は次の場所に保存されている。
+
+- Core指標・OOF予測: `outputs/runs/{core_run_id}/`
+- 説明性・誤分類分析: `outputs/runs/{explain_run_id}/`
+- MinHashLSH監査: `outputs/extensions/{extension_run_id}/`
+- データ品質集計: `{relative_display(quality_summary_path, '未選択')}`
+- Fold割当: `{relative_display(fold_artifact_path, 'outputs/folds/common_folds.json')}`
+- Fold不均衡集計: `{relative_display(fold_imbalance_path, '未選択')}`
+- 構造要素比率比較: `{relative_display(structural_ratio_path, '未選択')}`
+
+再現手順は次のとおりである。
+
+1. `uv sync --group dev --group reporting`で依存関係を同期する。
+2. `scripts/generate_full_data.py`で合成データを生成し、承認済みhashと照合する。
+3. 共通Foldを生成し、全条件・全モデルで同一の割当を使用する。
+4. Core実験、説明性分析、近接重複検査を順に実行する。
+5. `scripts/build_report.py`を実行し、Markdown、HTML、PDFおよびlayout checkを生成する。
+
+## A.4 基準条件の混同行列
+
+D0（基本unigram条件）＋LinearSVCの混同行列を、最良モデルとの比較用に示す。
+
+{baseline_confusion_table}
+
+## A.5 MinHashLSH詳細
+
+{extension_table}
+
+完全一致・正規化後一致では検出されない候補を含め、全件を検査した。候補のうちcross-label pairとdifferent-template-group pairはいずれも0件であった。
+
+## A.6 Fold不均衡詳細
+
+{fold_imbalance_table}
+
+## A.7 構造要素比率の比較
+
+{structural_ratio_table}
+
+{structural_ratio_narrative}
+{bert_appendix}
 """
 
 

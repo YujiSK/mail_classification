@@ -15,6 +15,16 @@ from statistics import mean, pstdev
 
 CORE_CONDITIONS = ("D0", "D1", "D2")
 CORE_MODELS = ("linear_svc", "logistic_regression")
+CONDITION_LABELS = {
+    "D0": "D0（基本unigram条件）",
+    "D1": "D1（bigram追加条件）",
+    "D2": "D2（構造要素除去条件）",
+}
+MODEL_LABELS = {
+    "linear_svc": "LinearSVC",
+    "logistic_regression": "Logistic Regression",
+}
+CLASS_LABELS = ("account_support", "billing", "product_inquiry", "technical_issue")
 
 
 def read_csv_rows(path: str | Path) -> list[dict[str, str]]:
@@ -39,10 +49,10 @@ def build_metric_summary_table(run_dir: str | Path, metric: str) -> str:
     if not by_key:
         raise ValueError(f"metric {metric!r} not found in {run_dir}/metrics_summary.csv")
 
-    headers = ["condition", *CORE_MODELS]
+    headers = ["条件", *(MODEL_LABELS[model] for model in CORE_MODELS)]
     table_rows = []
     for condition in CORE_CONDITIONS:
-        row = [condition]
+        row = [CONDITION_LABELS[condition]]
         for model in CORE_MODELS:
             cell = by_key.get((condition, model))
             row.append(
@@ -52,6 +62,54 @@ def build_metric_summary_table(run_dir: str | Path, metric: str) -> str:
             )
         table_rows.append(row)
     return markdown_table(headers, table_rows)
+
+
+def read_core_required_metrics(
+    run_dir: str | Path, condition: str, model: str
+) -> dict[str, float]:
+    """Read the assignment's four metrics for one Core cell from metrics_summary.csv."""
+    rows = read_csv_rows(Path(run_dir) / "metrics_summary.csv")
+    selected = {
+        row["metric"]: float(row["cv_mean"])
+        for row in rows
+        if row["condition"] == condition and row["model"] == model
+    }
+    required = {"accuracy", "macro_f1"} | {
+        f"{metric}_{label}"
+        for metric in ("precision", "recall")
+        for label in CLASS_LABELS
+    }
+    missing = required - selected.keys()
+    if missing:
+        raise ValueError(
+            f"missing required metrics for condition={condition!r} model={model!r}: "
+            f"{sorted(missing)}"
+        )
+    return {
+        "Accuracy": selected["accuracy"],
+        "Macro Precision": mean(selected[f"precision_{label}"] for label in CLASS_LABELS),
+        "Macro Recall": mean(selected[f"recall_{label}"] for label in CLASS_LABELS),
+        "Macro-F1": selected["macro_f1"],
+    }
+
+
+def build_core_required_metrics_table(run_dir: str | Path) -> str:
+    """Render Accuracy, macro Precision/Recall/F1 for all six Core cells."""
+    table_rows = []
+    for condition in CORE_CONDITIONS:
+        for model in CORE_MODELS:
+            metrics = read_core_required_metrics(run_dir, condition, model)
+            table_rows.append(
+                [
+                    CONDITION_LABELS[condition],
+                    MODEL_LABELS[model],
+                    *(f"{metrics[name]:.3f}" for name in metrics),
+                ]
+            )
+    return markdown_table(
+        ["条件", "モデル", "Accuracy", "Macro Precision", "Macro Recall", "Macro-F1"],
+        table_rows,
+    )
 
 
 def build_confusion_matrix_table(run_dir: str | Path, condition: str, model: str) -> str:
@@ -80,11 +138,11 @@ def build_paired_differences_table(
     if not filtered:
         raise ValueError(f"no paired_differences rows for baseline={baseline!r} metric={metric!r}")
 
-    headers = ["condition", "model", "mean_diff", "std_diff", "n_improved", "n_worsened", "n_folds"]
+    headers = ["条件", "モデル", "平均差", "差の標準偏差", "改善Fold", "悪化Fold", "Fold数"]
     table_rows = [
         [
-            r["condition"],
-            r["model"],
+            CONDITION_LABELS[r["condition"]],
+            MODEL_LABELS[r["model"]],
             f"{float(r['mean_diff']):+.3f}",
             f"{float(r['std_diff']):.3f}",
             r["n_improved"],
@@ -133,6 +191,33 @@ def build_error_category_summary_table(explain_run_dir: str | Path) -> str:
             row.append(str(sum(counts.values())))
             table_rows.append(row)
     return markdown_table(headers, table_rows)
+
+
+def build_error_category_percentage_table(explain_run_dir: str | Path) -> str:
+    """Render each error category as count and within-cell percentage."""
+    rows = read_csv_rows(Path(explain_run_dir) / "error_category_summary.csv")
+    categories = sorted({r["primary_category"] for r in rows})
+    by_cell: dict[tuple[str, str], dict[str, int]] = {}
+    for row in rows:
+        by_cell.setdefault((row["condition"], row["model"]), {})[
+            row["primary_category"]
+        ] = int(row["count"])
+
+    table_rows = []
+    for condition in CORE_CONDITIONS:
+        for model in CORE_MODELS:
+            counts = by_cell.get((condition, model), {})
+            total = sum(counts.values())
+            cells = [
+                f"{counts.get(category, 0)} ({counts.get(category, 0) / total:.1%})"
+                if total
+                else "0 (0.0%)"
+                for category in categories
+            ]
+            table_rows.append(
+                [CONDITION_LABELS[condition], MODEL_LABELS[model], *cells, str(total)]
+            )
+    return markdown_table(["条件", "モデル", *categories, "誤分類数"], table_rows)
 
 
 def build_extension_summary_table(extension_run_dir: str | Path) -> str:
@@ -245,6 +330,18 @@ def build_fold_imbalance_narrative(analysis_path: str | Path) -> str:
     )
 
 
+def build_fold_imbalance_brief_narrative(analysis_path: str | Path) -> str:
+    """Concise main-text summary; detailed group identities remain in the appendix."""
+    label_rows, total_rows = _validated_fold_imbalance_rows(analysis_path)
+    group_counts = [int(row["n_template_groups"]) for row in label_rows]
+    fold_counts = [int(row["n_samples"]) for row in total_rows]
+    return (
+        "テンプレートグループ数を5分割で均等に配分できないため、評価Foldの件数は"
+        f"{min(fold_counts)}〜{max(fold_counts)}件となった。また、クラスごとの評価対象は"
+        f"{min(group_counts)}〜{max(group_counts)}グループとなり、Foldごとの語彙構成に差が生じた。"
+    )
+
+
 def verify_bert_alignment(
     bert_run_dir: str | Path, fold_artifact_path: str | Path, expected_data_hash: str
 ) -> None:
@@ -324,11 +421,11 @@ def build_bert_comparison_table(core_dir: str | Path, bert_run_dir: str | Path) 
         (r["condition"], r["model"]): r for r in core_rows if r["metric"] == "macro_f1"
     }
 
-    headers = ["condition", "model", "macro_f1 (cv_mean ± cv_std)"]
+    headers = ["条件", "モデル", "macro-F1（平均 ± 標準偏差）"]
     table_rows = [
         [
-            condition,
-            model,
+            CONDITION_LABELS[condition],
+            MODEL_LABELS[model],
             f"{float(by_key[(condition, model)]['cv_mean']):.3f} ± {float(by_key[(condition, model)]['cv_std']):.3f}",
         ]
         for condition in CORE_CONDITIONS
@@ -336,35 +433,20 @@ def build_bert_comparison_table(core_dir: str | Path, bert_run_dir: str | Path) 
     ]
 
     bert_mean, bert_std, _ = read_bert_fold_metric_cv(bert_run_dir, "f1_score")
-    table_rows.append(["Extension", "DistilBERT (fine-tuned)", f"{bert_mean:.3f} ± {bert_std:.3f}"])
+    table_rows.append(
+        ["発展実験", "DistilBERT（ファインチューニング）", f"{bert_mean:.3f} ± {bert_std:.3f}"]
+    )
 
     return markdown_table(headers, table_rows)
 
 
 def build_bert_required_metrics_table(core_dir: str | Path, bert_run_dir: str | Path) -> str:
-    """Compare the assignment's four required metrics for D2/LinearSVC and BERT.
-
-    Core macro precision/recall are derived by averaging the four classwise
-    ``cv_mean`` values. BERT values are means of its five fold rows. No report
-    value is embedded as a literal.
-    """
-    core_rows = read_csv_rows(Path(core_dir) / "metrics_summary.csv")
-    selected = {
-        row["metric"]: float(row["cv_mean"])
-        for row in core_rows
-        if row["condition"] == "D2" and row["model"] == "linear_svc"
-    }
-    labels = ("account_support", "billing", "product_inquiry", "technical_issue")
-    required_core_metrics = {
-        "Accuracy": selected["accuracy"],
-        "Precision (macro)": mean(selected[f"precision_{label}"] for label in labels),
-        "Recall (macro)": mean(selected[f"recall_{label}"] for label in labels),
-        "Macro-F1": selected["macro_f1"],
-    }
+    """Compare the best Core model (D1/LinearSVC) with DistilBERT."""
+    required_core_metrics = read_core_required_metrics(core_dir, "D1", "linear_svc")
     bert_columns = {
         "Accuracy": "accuracy",
-        "Precision (macro)": "precision",
-        "Recall (macro)": "recall",
+        "Macro Precision": "precision",
+        "Macro Recall": "recall",
         "Macro-F1": "f1_score",
     }
     rows = []
@@ -372,14 +454,13 @@ def build_bert_required_metrics_table(core_dir: str | Path, bert_run_dir: str | 
         bert_mean, _, _ = read_bert_fold_metric_cv(bert_run_dir, bert_column)
         rows.append([metric, f"{required_core_metrics[metric]:.3f}", f"{bert_mean:.3f}"])
     return markdown_table(
-        ["metric", "TF-IDF + LinearSVC (D2)", "DistilBERT (fine-tuned)"], rows
+        ["指標", "D1（bigram追加条件）＋LinearSVC", "DistilBERT（ファインチューニング）"],
+        rows,
     )
 
 
 def build_structural_ratio_table(structural_ratio_comparison_path: str | Path) -> str:
-    """Renders outputs/analysis/structural_ratio_comparison.json (population
-    vs. misclassified ratio per structural flag, with a two-proportion z-test
-    p-value; never claims significance itself, only reports the computed value)."""
+    """Render descriptive population/misclassification ratios without inferential p-values."""
     payload = json.loads(Path(structural_ratio_comparison_path).read_text(encoding="utf-8"))
     headers = [
         "flag",
@@ -387,7 +468,6 @@ def build_structural_ratio_table(structural_ratio_comparison_path: str | Path) -
         "misclassified ratio",
         "difference",
         "exceeds population",
-        "p-value (two-proportion z)",
     ]
     table_rows = []
     for flag, stats in sorted(payload["flags"].items()):
@@ -398,54 +478,23 @@ def build_structural_ratio_table(structural_ratio_comparison_path: str | Path) -
                 f"{stats['misclassified_ratio']:.3f}",
                 f"{stats['ratio_difference']:+.3f}",
                 "Yes" if stats["exceeds_population_ratio"] else "No",
-                f"{stats['two_proportion_z_p_value']:.3f}",
             ]
         )
     return markdown_table(headers, table_rows)
 
 
-_SIGNIFICANCE_ALPHA = 0.05
-
-
 def build_structural_ratio_narrative(structural_ratio_comparison_path: str | Path) -> str:
-    """One paragraph, generated entirely from structural_ratio_comparison.json,
-    stating for each flag whether the misclassified-subset ratio significantly
-    exceeds the population ratio (two-proportion z-test at alpha=0.05)."""
+    """Describe ratios only; repeated sample IDs invalidate an independence claim."""
     payload = json.loads(Path(structural_ratio_comparison_path).read_text(encoding="utf-8"))
     flags = payload["flags"]
 
-    significant_exceed = sorted(
-        flag
-        for flag, stats in flags.items()
-        if stats["exceeds_population_ratio"] and stats["two_proportion_z_p_value"] < _SIGNIFICANCE_ALPHA
-    )
-    not_significant = sorted(
-        flag
-        for flag, stats in flags.items()
-        if flag not in significant_exceed
-    )
-
     per_flag_detail = "、".join(
         f"{flag}: 母集団{flags[flag]['population_ratio']:.1%}／誤分類{flags[flag]['misclassified_ratio']:.1%}"
-        f"（差{flags[flag]['ratio_difference']:+.1%}、p={flags[flag]['two_proportion_z_p_value']:.3f}）"
+        f"（差{flags[flag]['ratio_difference']:+.1%}）"
         for flag in sorted(flags)
     )
-
-    if significant_exceed:
-        conclusion = (
-            f"{'、'.join(significant_exceed)}は誤分類における出現比率が母集団比率よりp<{_SIGNIFICANCE_ALPHA}で"
-            "有意に高く、単なる母集団由来の頻度だけでは説明できないバイアスが示唆される。"
-        )
-    else:
-        conclusion = (
-            "いずれの構造要素も誤分類比率と母集団比率の差はp<"
-            f"{_SIGNIFICANCE_ALPHA}で有意ではなく（"
-            f"{'、'.join(not_significant)}）、構造要素の混入は母集団由来の頻度で説明可能な範囲であり、"
-            "誤分類に特有の追加バイアスを生んでいるという根拠は本分析では確認されなかった。"
-        )
-
     return (
-        f"`outputs/analysis/{Path(structural_ratio_comparison_path).name}`（母集団{payload['population_total']}件、"
-        f"誤分類{payload['misclassified_total']}件、{payload['misclassified_grain']}）による比較: "
-        f"{per_flag_detail}。{conclusion}"
+        f"母集団{payload['population_total']}件、誤分類{payload['misclassified_total']}行による記述的比較: "
+        f"{per_flag_detail}。誤分類データは同一sample_idを条件・モデル別に反復して含むため、"
+        "各行を独立観測とみなす推測統計は適用せず、有意差の主張は行わない。"
     )

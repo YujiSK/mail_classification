@@ -218,6 +218,12 @@ outputs/analysis/
 # regenerates it, so it is tracked as evidence rather than gitignored.
 !outputs/runs/phase8-bert-seed42/
 
+# Phase JA-7 Japanese BERT comparison: reran locally (CPU, isolated venv,
+# ~50 minutes of training), not via the tracked uv environment. Same
+# rationale as phase8-bert-seed42/ -- expensive to reproduce, tracked as
+# evidence.
+!outputs/runs/phaseJA7-bert-seed42/
+
 # Ruff stuff:
 .ruff_cache/
 

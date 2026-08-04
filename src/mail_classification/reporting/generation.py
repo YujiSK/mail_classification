@@ -41,6 +41,9 @@ DEFAULT_STRUCTURAL_RATIO_RELATIVE = (
     Path("outputs") / "analysis" / "structural_ratio_comparison.json"
 )
 DEFAULT_FOLD_IMBALANCE_RELATIVE = Path("outputs") / "analysis" / "fold_imbalance_stats.csv"
+DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH = (
+    Path(__file__).resolve().parents[3] / "configs" / "report_layout_overrides.json"
+)
 
 
 def _load_manifest(run_dir: Path) -> dict:
@@ -693,14 +696,31 @@ class ReportBuildResult:
     manifest_path: Path
 
 
-def render_report_pdf(markdown_path: Path, report_dir: Path) -> tuple[Path, Path, Path, Path]:
+def render_report_pdf(
+    markdown_path: Path,
+    report_dir: Path,
+    *,
+    layout_overrides_path: Path | None = None,
+) -> tuple[Path, Path, Path, Path]:
     """HTML -> PDF -> layout check from an already-written report.md, without
     regenerating its content. Used by write_report for a freshly-generated
     markdown file, and reusable standalone (see scripts/render_report_pdf.py)
     to re-render a hand-edited report.md as-is."""
+    overrides = None
+    if layout_overrides_path is not None:
+        overrides = json.loads(Path(layout_overrides_path).read_text(encoding="utf-8"))
+        if not isinstance(overrides, dict) or any(
+            not isinstance(overrides.get(key, []), list)
+            for key in ("page_break_before", "keep_together")
+        ):
+            raise ValueError(f"invalid report layout overrides: {layout_overrides_path}")
+
     build_dir = report_dir / "_build"
     html_path, registry_path = report_builder.build(
-        md_path=markdown_path, css_path=_PDF_RENDERER_CSS_PATH, build_dir=build_dir
+        md_path=markdown_path,
+        css_path=_PDF_RENDERER_CSS_PATH,
+        build_dir=build_dir,
+        overrides=overrides,
     )
 
     pdf_path = report_dir / "report.pdf"
@@ -790,7 +810,9 @@ def write_report(
     markdown_path.write_text(markdown_text, encoding="utf-8")
 
     html_path, registry_path, pdf_path, layout_check_path = render_report_pdf(
-        markdown_path, report_dir
+        markdown_path,
+        report_dir,
+        layout_overrides_path=DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH,
     )
 
     manifest = RunManifest(

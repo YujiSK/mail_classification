@@ -19,6 +19,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from mail_classification.reporting import render_report_pdf
+from mail_classification.reporting.generation import DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH
 
 DEFAULT_REPORT_DIR = "outputs/reports/phase7-report-phase4-core-seed42"
 
@@ -39,7 +40,9 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"{markdown_path} does not exist")
 
     html_path, registry_path, pdf_path, layout_check_path = render_report_pdf(
-        markdown_path, report_dir
+        markdown_path,
+        report_dir,
+        layout_overrides_path=DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH,
     )
     print(f"report.pdf: {pdf_path}")
     print(f"layout_check.json: {layout_check_path}")

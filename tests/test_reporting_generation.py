@@ -159,6 +159,10 @@ def test_write_report_end_to_end_with_synthetic_pipeline(tmp_path: Path) -> None
     assert result.layout_check_path.is_file()
     assert result.manifest_path.is_file()
 
+    html_text = result.html_path.read_text(encoding="utf-8")
+    assert 'data-source-id="heading-6"' in html_text
+    assert 'class="force-page-break" data-source-id="heading-6"' in html_text
+
     check_result = json.loads(result.layout_check_path.read_text(encoding="utf-8"))
     assert check_result["status"] != "FAIL"
 

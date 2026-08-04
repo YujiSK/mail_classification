@@ -1,0 +1,9 @@
+{
+  "_comment": "outputs/reports/phase7-report-phase4-core-seed42/_build/report.source_registry.json の id を page_break_before / keep_together に指定する",
+  "page_break_before": [
+    "heading-6",
+    "heading-9",
+    "heading-title-technical-appendix-0e700e7be0"
+  ],
+  "keep_together": []
+}

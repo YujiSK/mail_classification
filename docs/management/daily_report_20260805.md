@@ -159,3 +159,7 @@ phaseJA4-core-seed42/_build/report.source_registry.json`から対象見出しの
 
 2026-08-05 16:32:00 +07 — **開始**: User要望「5. 混入率別の結果 の所で改ページ」に対応する。
 2026-08-05 16:34:33 +07 — **完了 (所要時間: 約2分)**: `outputs/reports/ext-subtopic-contamination-report-seed42/_build/report.source_registry.json`から対象見出しのid（`heading-title-5-cbf3e52600`、「5. 混入率別の結果」に対応）を特定し、`configs/report_layout_overrides_subtopic_contamination.json`を新規作成（英語版・日本語版の既存overridesファイルは流用しない旨を`_comment`に明記）。`report.py`へ`DEFAULT_LAYOUT_OVERRIDES_PATH`定数を追加し、`write_subtopic_contamination_report()`の`render_report_pdf()`呼び出しへ適用。実データで再生成し、`layout_check: PASS`（13ページ、violations 0件）、3ページ目が「5. 混入率別の結果」から開始することをPDFテキスト抽出で実測確認。`report.md`の内容（数値・本文）は無変更。`uv run pytest tests/test_subtopic_contamination_report.py -q`は7 passed。
+
+2026-08-05 16:46:21 +07 — **開始**: User要望「代表的な誤分類例（匿名化、、、のところも改ページ」に対応する。
+
+2026-08-05 16:46:21 +07 — **完了 (所要時間: 約13分)**: `heading-title-8-decision-score-e308b16b07-c0-c30-sample-1e392830e4`（「代表的な誤分類例」）を`configs/report_layout_overrides_subtopic_contamination.json`へ追加し改ページを実測確認（10ページ目先頭から開始）。続けてUserから「11. Technical Appendixも改ページして、テストは省いてよい」との指示を受け、`heading-title-11-technical-appendix-ea5b8c1e68`も追加。実データで再生成し`layout_check: PASS`（13ページ、violations 0件）、13ページ目が「11. Technical Appendix」から開始することをPDFテキスト抽出で確認。User指示により本追記分はfull test suite再実行を省略し、report.md本文・数値は無変更（設定ファイルのみの変更）であることを確認済み。

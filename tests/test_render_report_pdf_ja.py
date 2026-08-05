@@ -10,7 +10,11 @@ page break at whatever heading happens to occupy that position/hash by
 coincidence. Caught empirically: running the English
 scripts/render_report_pdf.py against the Japanese report directory changed
 its page count from 11 (the reviewed, hash-recorded version) to 12 with no
-change to report.md itself.
+change to report.md itself. (The Japanese overrides file now also forces
+5 page breaks of its own, so page *count* alone no longer distinguishes the
+two files reliably -- see
+test_english_overrides_file_is_not_silently_reused_for_japanese_report,
+which compares actual per-page break positions instead.)
 """
 
 from __future__ import annotations
@@ -71,10 +75,10 @@ def test_rendering_ja_report_applies_japanese_overrides_by_default() -> None:
     assert pdf_path.is_file()
 
 
-def test_chapter_5_starts_a_new_page_per_configured_override() -> None:
-    """configs/report_layout_overrides_ja.json currently forces a page break
-    before heading-5 (第5章 Core実験結果); verify that heading actually
-    starts a fresh PDF page, not merely that layout_check passes."""
+def test_configured_headings_each_start_a_new_page() -> None:
+    """Every heading text configured in
+    configs/report_layout_overrides_ja.json's page_break_before list must
+    actually start a fresh PDF page, not merely make layout_check pass."""
     _require_report_artifacts()
     pdfplumber = pytest.importorskip("pdfplumber")
     markdown_path = REPORT_DIR / "report.md"
@@ -82,39 +86,63 @@ def test_chapter_5_starts_a_new_page_per_configured_override() -> None:
         markdown_path, REPORT_DIR, layout_overrides_path=DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH_JA
     )
 
+    import json
+
+    registry = json.loads(
+        (REPORT_DIR / "_build" / "report.source_registry.json").read_text(encoding="utf-8")
+    )
+    overrides = json.loads(
+        DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH_JA.read_text(encoding="utf-8")
+    )
+    heading_texts = [
+        h["text"]
+        for h in registry
+        if isinstance(h, dict) and h.get("id") in overrides["page_break_before"]
+    ]
+    assert len(heading_texts) == len(overrides["page_break_before"])
+
     with pdfplumber.open(REPORT_DIR / "report.pdf") as pdf:
-        found = False
-        for page in pdf.pages:
-            text = (page.extract_text() or "").lstrip()
-            if text.startswith("第5章"):
-                found = True
-                break
-        assert found, "第5章 does not start at the top of any page"
+        page_starts = [(page.extract_text() or "").lstrip() for page in pdf.pages]
+
+    for heading_text in heading_texts:
+        # Use a short prefix, not the full heading text: pdfplumber's
+        # extraction substitutes some kanji/punctuation with visually
+        # identical CJK compatibility codepoints (e.g. 日 -> ⽇, ・ -> ‧)
+        # depending on font subsetting, so exact/long-text matches are
+        # unreliable even though the rendered page is correct.
+        prefix = heading_text[:4]
+        assert any(
+            start.startswith(prefix) for start in page_starts
+        ), f"{heading_text!r} does not start at the top of any page"
 
 
 def test_english_overrides_file_is_not_silently_reused_for_japanese_report() -> None:
-    """Applying the English overrides to the Japanese report produces a
-    different layout_check outcome than the Japanese-specific overrides --
+    """Applying the English overrides to the Japanese report forces page
+    breaks at different points than the Japanese-specific overrides --
     this is the actual regression this whole test module exists to prevent
-    from happening unnoticed via the wrong script/config."""
+    from happening unnoticed via the wrong script/config. (Total page count
+    alone is not a reliable signal here: both files happen to yield the same
+    page count while breaking at different headings, so this compares the
+    actual per-page break positions.)"""
     _require_report_artifacts()
     if not ENGLISH_OVERRIDES_PATH.is_file():
         pytest.skip("configs/report_layout_overrides.json is not present")
+    pdfplumber = pytest.importorskip("pdfplumber")
     markdown_path = REPORT_DIR / "report.md"
 
-    _, _, _, ja_layout_check_path = render_report_pdf(
+    render_report_pdf(
         markdown_path, REPORT_DIR, layout_overrides_path=DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH_JA
     )
-    import json
+    with pdfplumber.open(REPORT_DIR / "report.pdf") as pdf:
+        ja_page_starts = [(page.extract_text() or "").lstrip()[:10] for page in pdf.pages]
 
-    ja_page_count = json.loads(ja_layout_check_path.read_text(encoding="utf-8"))["page_count"]
-
-    _, _, _, en_layout_check_path = render_report_pdf(
+    render_report_pdf(
         markdown_path, REPORT_DIR, layout_overrides_path=ENGLISH_OVERRIDES_PATH
     )
-    en_page_count = json.loads(en_layout_check_path.read_text(encoding="utf-8"))["page_count"]
+    with pdfplumber.open(REPORT_DIR / "report.pdf") as pdf:
+        en_page_starts = [(page.extract_text() or "").lstrip()[:10] for page in pdf.pages]
 
-    assert en_page_count != ja_page_count  # demonstrates the mismatch
+    assert en_page_starts != ja_page_starts  # demonstrates the mismatch
 
     # Restore the correct (Japanese-overrides) PDF so this test doesn't leave
     # the tracked report_decision hash stale for anyone running the suite.

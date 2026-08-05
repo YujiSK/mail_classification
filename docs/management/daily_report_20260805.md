@@ -131,3 +131,7 @@ phaseJA4-core-seed42/_build/report.source_registry.json`から対象見出しの
 `git diff --check`成功。`docs/reviews/phaseJA9_report_decision.json`へ改ページ設定と最新
 `report_pdf_sha256`を更新し、`deliverables/task10_ja_final_report.pdf`も最新版へ差し替えた。
 専用commitを作成しpush、`main`へfast-forward merge・pushする。
+
+2026-08-05 09:56:00 +07 — **開始**: User が `configs/report_layout_overrides_ja.json` をIDEで直接編集し、改ページ対象を4件追加（6.2 誤分類カテゴリ／第8章 日本語BERTとの比較／付録 Technical Appendix／A.7 semantic_template_id単位 英日accuracy対応表）。「commit push」の指示を受け、内容を検証したうえでコミット・pushする。
+
+2026-08-05 10:02:57 +07 — **完了 (所要時間: 約7分)**: `report.source_registry.json` から追加4見出しのIDを解決し（heading-6-2 / heading-8 / heading-title-technical-appendix-0e700e7be0 / heading-title-a-7-semantic-template-id-accuracy-d8d334c2db）、対象であることを確認。`scripts/render_report_pdf_ja.py` でPDF再生成 → layout_check PASS（12ページ、violations 0）。`pdfplumber` で5つの改ページ対象見出しすべてが実際にページ先頭に来ることを目視確認。`tests/test_render_report_pdf_ja.py` を更新: (1) 単一章（第5章）決め打ちのテストを、overrides ファイルの `page_break_before` 全件を動的に検証する `test_configured_headings_each_start_a_new_page` に一般化（フォントサブセット起因のCJK互換文字置換 日→⽇, ・→‧ を避けるため見出し先頭4文字のprefix一致で判定）、(2) 英語版overrides誤用検知テストは、JA側の改ページが5件に増えたことで両者のページ「数」が偶然一致してしまうケースを発見したため、ページ数比較ではなく各ページ先頭テキストの並び比較に修正。`uv run pytest tests/test_render_report_pdf_ja.py tests/test_reporting_ja.py -q` で12件全パス。`report.md` のSHA-256は不変（4814abfc...、内容変更なし）、`report.pdf` のSHA-256を更新（82a16aca...、ページ数11→12）。`docs/reviews/phaseJA9_report_decision.json` の `generated_at`/`layout_overrides_note`/`report_pdf_sha256`/`pdf_page_count` を更新し、`deliverables/task10_ja_final_report.pdf` を最新PDFで上書き。

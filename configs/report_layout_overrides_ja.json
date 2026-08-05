@@ -1,7 +1,11 @@
 {
   "_comment": "outputs/reports/phaseJA9-report-phaseJA4-core-seed42/_build/report.source_registry.json の id を page_break_before / keep_together に指定する。日本語版専用: 見出し構成が英語版（configs/report_layout_overrides.json）と異なるため、英語版のIDをそのまま流用しないこと。",
   "page_break_before": [
-    "heading-5"
+    "heading-5",
+    "heading-6-2",
+    "heading-8",
+    "heading-title-technical-appendix-0e700e7be0",
+    "heading-title-a-7-semantic-template-id-accuracy-d8d334c2db"
   ],
   "keep_together": []
 }

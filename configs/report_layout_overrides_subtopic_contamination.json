@@ -1,0 +1,7 @@
+{
+  "_comment": "outputs/reports/ext-subtopic-contamination-report-seed42/_build/report.source_registry.json の id を page_break_before / keep_together に指定する。本Extension専用: 見出し構成が英語版Core report（configs/report_layout_overrides.json）・日本語版（configs/report_layout_overrides_ja.json）と異なるため、それらのIDをそのまま流用しないこと。",
+  "page_break_before": [
+    "heading-title-5-cbf3e52600"
+  ],
+  "keep_together": []
+}

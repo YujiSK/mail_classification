@@ -655,6 +655,15 @@ uv run python3 scripts/build_subtopic_contamination_report.py
 
 DEFAULT_REPORT_RUN_ID = "ext-subtopic-contamination-report-seed42"
 
+# Extension-specific: heading structure differs from Core's English/JA reports
+# (configs/report_layout_overrides.json / report_layout_overrides_ja.json), so
+# this Extension keeps its own overrides file rather than reusing either.
+DEFAULT_LAYOUT_OVERRIDES_PATH = (
+    Path(__file__).resolve().parents[4]
+    / "configs"
+    / "report_layout_overrides_subtopic_contamination.json"
+)
+
 
 @dataclass(frozen=True)
 class ExtensionReportBuildResult:
@@ -688,7 +697,7 @@ def write_subtopic_contamination_report(
     markdown_path.write_text(markdown, encoding="utf-8")
 
     _html_path, _registry_path, pdf_path, layout_check_path = render_report_pdf(
-        markdown_path, report_dir, layout_overrides_path=None
+        markdown_path, report_dir, layout_overrides_path=DEFAULT_LAYOUT_OVERRIDES_PATH
     )
     return ExtensionReportBuildResult(
         report_dir=report_dir,

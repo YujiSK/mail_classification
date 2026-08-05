@@ -224,6 +224,13 @@ outputs/analysis/
 # evidence.
 !outputs/runs/phaseJA7-bert-seed42/
 
+# Local-only copy of the final submission PDF (policy confirmed with User
+# 2026-08-05: outputs/reports/ generated PDFs are not git-tracked for either
+# language track; only the SHA-256/provenance record in
+# docs/reviews/phaseJA9_report_decision.json is tracked). Kept outside
+# outputs/ so it survives an outputs/ cleanup, but is not itself evidence.
+deliverables/
+
 # Ruff stuff:
 .ruff_cache/
 

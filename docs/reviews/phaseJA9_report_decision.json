@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "language": "ja",
+  "phase": "JA-9",
+  "status": "generated",
+  "generated_at": "2026-08-05T02:06:27+00:00",
+  "policy": "report_pdf_not_git_tracked_hash_recorded",
+  "policy_note": "Mirrors the English track's own existing policy: outputs/reports/ is gitignored with no exception (generated PDFs are reproducible from tracked code + data + the tracked BERT run evidence, so only this hash record is tracked, not the PDF bytes themselves). Confirmed with User (Yuji Sunagawa) 2026-08-05.",
+  "report_run_id": "phaseJA9-report-phaseJA4-core-seed42",
+  "report_dir": "outputs/reports/phaseJA9-report-phaseJA4-core-seed42",
+  "report_pdf_sha256": "603b1e6c0c2419535805fd26dbdc37caf78b412ff918bbb7e411bd6dc431d09f",
+  "report_md_sha256": "4814abfc16181b2e38d00377af9f1fc8bafc35494d42bca47a3f18a8d606ac62",
+  "pdf_page_count": 11,
+  "layout_check_status": "PASS",
+  "layout_check_score": 0,
+  "layout_check_violations": 0,
+  "layout_check_unresolved": 0,
+  "local_deliverable_copy": "deliverables/task10_ja_final_report.pdf",
+  "local_deliverable_copy_git_tracked": false,
+  "source_runs": {
+    "core_run_id": "phaseJA4-core-seed42",
+    "explain_run_id": "phaseJA5-explain-seed42",
+    "extension_run_id": "phaseJA6-minhash-seed42",
+    "bert_run_id": "phaseJA7-bert-seed42",
+    "en_ja_comparison_artifact": "outputs/runs/phaseJA8-en-ja-comparison-seed42.json"
+  },
+  "data_hash": "6d010d81e7d0dfc502eefb539a3523e70a0fb7f4c7fae909c9bdc338ca9fbf63",
+  "fold_artifact_hash": "41a10ce176bcf1f0c545a4b41a144e2e449c11dc0f3d7756460af680076c3ffb",
+  "en_full_data_hash_verified_unchanged": "53c6f8949a2c3c2c75351122e31dff6b43ca6ff8a4d8326947d387b75b9a0bbc",
+  "bert_metrics_audit": {
+    "audit_script": "scripts/audit_ja_bert_metrics.py",
+    "all_checks_passed": true,
+    "fold_mean_accuracy": 0.7972180605810801,
+    "fold_std_accuracy": 0.049919999999999996,
+    "fold_mean_macro_precision": 0.8023907697209614,
+    "fold_mean_macro_recall": 0.8039215686274509,
+    "fold_mean_macro_f1": 0.7722234677868684,
+    "oof_accuracy": 0.795,
+    "oof_macro_f1": 0.7887301886792453,
+    "confusion_matrix_sum": 800
+  },
+  "known_issue_resolved": {
+    "description": "A 2026-08-04 daily report narrative entry stated the report's BERT Accuracy as 0.737. Direct inspection of report.md, report generation source code, and an independent audit script confirmed the actually-generated value was always 0.797 (the correct 5-fold mean, matching a manual recomputation). The string '0.737' does not appear in report.md, report.pdf, or any report-generation source file; it appears only in the 2026-08-04 daily report's prose, which was a manual transcription error unrelated to any code path.",
+    "root_cause": "daily_report_narrative_transcription_error_not_a_code_bug",
+    "regression_tests_added": "tests/test_ja_bert_metrics_consistency.py"
+  }
+}

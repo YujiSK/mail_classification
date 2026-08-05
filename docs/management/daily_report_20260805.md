@@ -76,3 +76,36 @@ Section 9としてcommitを3件に分割して作成: (1) `63aabbb` 監査スク
 (2) `97285b1` BERT指標集計の変数名明確化・レポート本文への集計方法明記、
 (3) `624e22f` 最終レポート成果物hash記録・PDF保存方針。各commit前に`git diff --check`と
 関連テストを確認した。
+
+---
+
+2026-08-05 09:35:36 +07 — **開始**: User質問「日本語版だけMD編集したあとにPDF更新するには？」に
+回答するため、既存`scripts/render_report_pdf.py`（英語版専用、`configs/
+report_layout_overrides.json`をデフォルト適用）が日本語版report directoryへそのまま使えるか
+実地検証する。
+
+2026-08-05 09:35:36 +07 — **完了 (所要時間: 約12分)**: 検証の結果、重大な不具合を発見。
+`uv run python3 scripts/render_report_pdf.py outputs/reports/phaseJA9-report-phaseJA4-core-seed42`
+を実行したところ、`report.md`の内容は無変更のまま、PDFのページ数が11→12へ変化した。原因は
+`configs/report_layout_overrides.json`の`page_break_before`（`heading-6`／`heading-9`等、
+英語版レポートの見出し構造に合わせて指定された見出しID）を日本語版（見出しの数・順序・文言が
+異なる）へそのまま適用したため、意図しない位置に強制改ページが入ったこと。`write_report_ja()`は
+元々`layout_overrides_path`を渡していない（override無し）ため、この問題は`scripts/
+render_report_pdf.py`を日本語版へ流用した場合にのみ発生する。
+
+対応として、`scripts/render_report_pdf_ja.py`（`layout_overrides_path=None`固定、英語版
+overridesを絶対に参照しない設計をdocstringで明記）を新規作成し、`write_report_ja()`と再実行
+結果が一致すること（11ページ、`layout_check: PASS`、score 0、violations 0）を確認した。
+`tests/test_render_report_pdf_ja.py`を追加（英語版overridesを適用すると意図せずページ数が
+変わることを実測で示す回帰テストを含む、3件、全件pass）。
+
+副次的な発見: `report.md`が完全に同一バイト列であっても、`report.pdf`のSHA-256は再生成の都度
+異なることを確認した（この修正過程で3回再生成し、3回とも異なるhash）。基盤のChromeベースPDF
+レンダラーがbyte-deterministicでないため。`docs/reviews/phaseJA9_report_decision.json`へ
+この旨の注記（`report_pdf_sha256_note`）を追加し、`report_pdf_sha256`を最新の実測値へ更新した
+（`report_md_sha256`は不変であることを確認済みで、内容同一性の判定にはこちらを優先する）。
+`deliverables/task10_ja_final_report.pdf`も最新の正しい11ページ版へ更新した。
+
+`uv run pytest -q`は454 passed（+3、render_report_pdf_ja用テスト）、`uv lock --check`成功、
+`git diff --check`成功。この修正専用の追加commitを本branch（`agent/task10-ja-final-metrics-audit`
+は既にmain統合済みのため、続けて別途commitしてpushし、mainへ再統合する）で行う。

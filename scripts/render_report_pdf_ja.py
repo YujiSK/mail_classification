@@ -5,8 +5,9 @@ content from the CSV/JSON artifacts -- it only converts whatever is
 currently on disk. Use this after hand-editing report.md for final
 wording/polish.
 
-Deliberately does NOT apply configs/report_layout_overrides.json (unlike
-scripts/render_report_pdf.py): that file's page_break_before IDs
+Applies configs/report_layout_overrides_ja.json (a Japanese-specific file),
+NEVER configs/report_layout_overrides.json (the English one, unlike
+scripts/render_report_pdf.py): the English file's page_break_before IDs
 ("heading-6", "heading-9", a content-hash ID for the English "Technical
 Appendix" heading) were authored for the English report's specific heading
 structure. Applying it to the Japanese report -- which has a different
@@ -15,12 +16,13 @@ heading happens to occupy that same position/hash by coincidence, not at
 any semantically chosen point. This was caught empirically: running
 scripts/render_report_pdf.py against the Japanese report directory changed
 it from 11 pages (the reviewed, hash-recorded version) to 12 pages with no
-change to report.md itself. write_report_ja() already omits the overrides
-for the same reason; this script matches that.
+change to report.md itself. write_report_ja() uses the same Japanese
+overrides file by default; this script matches that.
 
-If the Japanese report ever needs its own forced page breaks, author a
-separate configs/report_layout_overrides_ja.json (keyed to the Japanese
-report's own heading registry) rather than reusing the English one.
+To add or change a forced page break, find the target heading's id in
+outputs/reports/<run_id>/_build/report.source_registry.json (regenerate the
+PDF once first if it doesn't exist yet) and add it to
+configs/report_layout_overrides_ja.json's page_break_before list.
 
 Note: any number or claim you hand-edit into report.md this way is no
 longer traceable to a source artifact. Re-run the Python one-liner that
@@ -47,6 +49,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from mail_classification.reporting import render_report_pdf
+from mail_classification.reporting.ja_generation import DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH_JA
 
 DEFAULT_REPORT_DIR = "outputs/reports/phaseJA9-report-phaseJA4-core-seed42"
 
@@ -69,7 +72,7 @@ if __name__ == "__main__":
     html_path, registry_path, pdf_path, layout_check_path = render_report_pdf(
         markdown_path,
         report_dir,
-        layout_overrides_path=None,
+        layout_overrides_path=DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH_JA,
     )
     print(f"report.pdf: {pdf_path}")
     print(f"layout_check.json: {layout_check_path}")

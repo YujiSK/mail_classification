@@ -38,6 +38,15 @@ DEFAULT_EXTENSION_RUN_ID = "phaseJA6-minhash-seed42"
 DEFAULT_BERT_RUN_ID = "phaseJA7-bert-seed42"
 DEFAULT_QUALITY_SUMMARY_RELATIVE = Path("outputs") / "data_quality" / "full_summary_ja.json"
 DEFAULT_EN_COMPARISON_RELATIVE = Path("outputs") / "runs" / "phaseJA8-en-ja-comparison-seed42.json"
+# Japanese-specific layout overrides (see configs/report_layout_overrides_ja.json's
+# own _comment): the Japanese report's heading structure differs from the
+# English report's, so English's configs/report_layout_overrides.json must
+# never be reused here (verified empirically -- see
+# scripts/render_report_pdf_ja.py's docstring for the page-count mismatch
+# this caused when tried).
+DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH_JA = (
+    Path(__file__).resolve().parents[3] / "configs" / "report_layout_overrides_ja.json"
+)
 
 
 def _load_manifest(run_dir: Path) -> dict:
@@ -597,7 +606,9 @@ def write_report_ja(
     markdown_path.write_text(markdown_text, encoding="utf-8")
 
     html_path, registry_path, pdf_path, layout_check_path = render_report_pdf(
-        markdown_path, report_dir
+        markdown_path,
+        report_dir,
+        layout_overrides_path=DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH_JA,
     )
 
     manifest = RunManifest(

@@ -109,3 +109,25 @@ overridesを絶対に参照しない設計をdocstringで明記）を新規作�
 `uv run pytest -q`は454 passed（+3、render_report_pdf_ja用テスト）、`uv lock --check`成功、
 `git diff --check`成功。この修正専用の追加commitを本branch（`agent/task10-ja-final-metrics-audit`
 は既にmain統合済みのため、続けて別途commitしてpushし、mainへ再統合する）で行う。
+
+---
+
+2026-08-05 09:35:36 +07 — **開始**: User要望「第5章 Core実験結果で改ページしたい」に対応する。
+
+2026-08-05 09:49:20 +07 — **完了 (所要時間: 約14分)**: `outputs/reports/phaseJA9-report-
+phaseJA4-core-seed42/_build/report.source_registry.json`から対象見出しのid（`heading-5`、
+「第5章 Core実験結果」に対応）を特定し、`configs/report_layout_overrides_ja.json`を新規作成
+（`page_break_before: ["heading-5"]`、英語版ファイルは流用しない旨を`_comment`に明記）。
+`ja_generation.py`へ`DEFAULT_REPORT_LAYOUT_OVERRIDES_PATH_JA`定数を追加し、`write_report_ja()`の
+`render_report_pdf()`呼び出しへ既定適用するよう変更（英語版`write_report()`と同じパターン）。
+`scripts/render_report_pdf_ja.py`も同定数を使うよう更新（以前の`layout_overrides_path=None`から
+変更）。`tests/test_render_report_pdf_ja.py`を新方針に合わせて全面改訂し、実際に「第5章」が
+ページ先頭から開始することをPDF実測で検証するテストを追加（5件、全件pass）。
+
+実データで再生成し、`layout_check: PASS`（11ページ、score 0、violations 0）を確認。ページ2・3を
+画像化して目視し、4.3節末尾に余白を残して自然に改ページされ、3ページ目が「第5章 Core実験結果」
+から開始することを確認した。`report.md`のSHA-256は不変（`4814abfc...`）であり、内容自体は変更
+されていないことを確認した。`uv run pytest -q`は456 passed、`uv lock --check`成功、
+`git diff --check`成功。`docs/reviews/phaseJA9_report_decision.json`へ改ページ設定と最新
+`report_pdf_sha256`を更新し、`deliverables/task10_ja_final_report.pdf`も最新版へ差し替えた。
+専用commitを作成しpush、`main`へfast-forward merge・pushする。

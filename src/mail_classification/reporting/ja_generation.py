@@ -85,8 +85,8 @@ def _bert_chapter(bert_dir: Path | None, core_dir: Path) -> tuple[str, str, str]
     best_condition, best_model, best_macro_f1 = best_core_metric_cell(core_dir, "macro_f1")
 
     bert_macro_f1_values = [float(r["macro_f1"]) for r in bert_rows]
-    bert_mean = mean(bert_macro_f1_values)
-    bert_std = pstdev(bert_macro_f1_values) if len(bert_macro_f1_values) > 1 else 0.0
+    fold_mean_macro_f1 = mean(bert_macro_f1_values)
+    fold_std_macro_f1 = pstdev(bert_macro_f1_values) if len(bert_macro_f1_values) > 1 else 0.0
 
     required_table = jt.build_bert_required_metrics_table_ja(
         core_dir, bert_dir / "fold_metrics.csv", best_condition=best_condition, best_model=best_model
@@ -107,19 +107,25 @@ random_seed={bert_manifest['seed']}、実行環境={bert_manifest['execution_env
 （device={bert_manifest['device']}、torch {bert_manifest['torch_version']}、
 transformers {bert_manifest['transformers_version']}）。
 
-**課題指定4指標（Core最良条件 {jt.JA_CONDITION_LABELS[best_condition]}＋{best_model} との比較）**:
+各総合指標は5分割交差検証におけるFold別指標の平均値である。混同行列およびクラス別指標は、
+全800件のOOF予測を統合して算出した。Fold平均Accuracyと、800件のOOF予測から直接算出した
+Accuracyは、Foldサイズが完全には均等でない（本稿執筆時点のvalidation件数は167/167/134/166/166）
+ため、僅かに異なり得る。両者を混同しないよう、本レポートの主要比較表はFold平均を用いる。
+
+**課題指定4指標（Core最良条件 {jt.JA_CONDITION_LABELS[best_condition]}＋{best_model} との比較、
+BERTはFold平均）**:
 
 {required_table}
 
-**macro-F1（全8セルとの比較）**:
+**macro-F1（全8セルとの比較、Fold平均 ± Fold間母標準偏差）**:
 
 {comparison_table}
 
-BERTのmacro-F1（cv_mean）は{bert_mean:.3f}（cv_std {bert_std:.3f}）であり、Core最良条件
-（{jt.JA_CONDITION_LABELS[best_condition]}／{best_model}、{best_macro_f1:.3f}）と比較して
-{"上回った" if bert_mean > best_macro_f1 else "下回った、または同程度であった"}。
+BERTのmacro-F1（Fold平均）は{fold_mean_macro_f1:.3f}（Fold間母標準偏差 {fold_std_macro_f1:.3f}）であり、
+Core最良条件（{jt.JA_CONDITION_LABELS[best_condition]}／{best_model}、{best_macro_f1:.3f}）と比較して
+{"上回った" if fold_mean_macro_f1 > best_macro_f1 else "下回った、または同程度であった"}。
 
-**混同行列（全Fold集約）**:
+**混同行列（全800件のOOF予測を統合）**:
 
 {confusion_table}
 

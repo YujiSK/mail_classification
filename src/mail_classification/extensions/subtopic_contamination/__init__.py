@@ -22,6 +22,7 @@ from .assignment import (
 from .cv import CELLS
 from .dataset import build_condition_records, write_condition_datasets
 from .insertion import apply_contamination
+from .report import DEFAULT_REPORT_RUN_ID, write_subtopic_contamination_report
 from .runner import DEFAULT_RUN_ID, run_and_write_subtopic_contamination_extension
 from .sentences import SUBTOPIC_SENTENCES
 
@@ -29,6 +30,7 @@ __all__ = [
     "CELLS",
     "CONTAMINATION_FRACTIONS",
     "CONTAMINATION_LEVELS",
+    "DEFAULT_REPORT_RUN_ID",
     "DEFAULT_RUN_ID",
     "ContaminationAssignmentRow",
     "SUBTOPIC_SENTENCES",
@@ -37,4 +39,5 @@ __all__ = [
     "build_contamination_assignment",
     "run_and_write_subtopic_contamination_extension",
     "write_condition_datasets",
+    "write_subtopic_contamination_report",
 ]
